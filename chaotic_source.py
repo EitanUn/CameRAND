@@ -4,6 +4,16 @@ import cv2
 
 PCT_MAX = 4294967295
 
+
+def get_random_bits(webcam, rang):
+    size = min(math.ceil(math.sqrt(rang.bit_length())), 6)
+    check, frame = webcam.read()
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frame = cv2.resize(frame, (size, size))
+    numlist = []
+    for i in frame.tolist():
+        numlist.extend(i)
+    return "".join([str(x % 2) for x in numlist])
 def get_rand_large(webcam):
     check, frame = webcam.read()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -16,31 +26,19 @@ def get_rand_large(webcam):
     return int(num, 2)
 
 
-def get_rand_range(webcam, min: int, max: int):
-    check, frame = webcam.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame = cv2.resize(frame, (8, 4))
-    numlist = []
-    for i in frame.tolist():
-        numlist.extend(i)
-    bitlist = [str(x % 2) for x in numlist]
-    num = "0b" + "".join(bitlist)
-    pct = int(num, 2) / PCT_MAX
-    return min + (max-min)*pct
+def get_rand_range(webcam, start: int, stop: int):
+    rang = (stop-start)
+    num = int("0b" + get_random_bits(webcam, rang), 2)
+    pct = num/(1 << num.bit_length())
+    return start + rang*pct
 
 
-def get_int_range(webcam, min: int, max: int):
-    size = math.ceil(math.sqrt(max.bit_length()))
-    check, frame = webcam.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame = cv2.resize(frame, (size, size))
-    numlist = []
-    for i in frame.tolist():
-        numlist.extend(i)
-    bitlist = [str(x % 2) for x in numlist]
-    num = "0b" + "".join(bitlist)
-    pct = int(num, 2) / pow(2, pow(size, 2))
-    return math.ceil(min + (max-min)*pct - 1)
+def get_int_range(webcam, start: int, stop: int):
+    rang = (stop-start)
+    num = int("0b" + get_random_bits(webcam, rang), 2)
+    while num > rang:
+        num = int("0b" + get_random_bits(webcam, rang), 2)
+    return start + num
 
 
 if __name__ == '__main__':

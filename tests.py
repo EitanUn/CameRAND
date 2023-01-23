@@ -1,9 +1,10 @@
 import math
 import logging
-from chaotic_source import get_int_range as rand, get_rand_range as rand_f
+from chaotic_source import get_int_range as rand, get_rand_range as rand_f, get_rand_large as rand_l
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+from RSA import is_prime
 
 
 def demo_dist(min, max, amount):
@@ -43,4 +44,13 @@ def demo_pi(amount):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
-    demo_pi(1000)
+    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    try:
+        while True:
+            num = rand_l(cam)
+            if is_prime(num, cam):
+                print(num)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        cam.release()

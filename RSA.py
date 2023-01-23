@@ -1,4 +1,4 @@
-from chaotic_source import get_rand_range as rand
+from chaotic_source import get_int_range as rand
 
 
 def rabin_miller(num, webcam, accuracy):
