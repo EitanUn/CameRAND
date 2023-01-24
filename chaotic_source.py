@@ -14,16 +14,10 @@ def get_random_bits(webcam, rang):
     for i in frame.tolist():
         numlist.extend(i)
     return "".join([str(x % 2) for x in numlist])
+
+
 def get_rand_large(webcam):
-    check, frame = webcam.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame = cv2.resize(frame, (32, 32))
-    numlist = []
-    for i in frame.tolist():
-        numlist.extend(i)
-    bitlist = [str(x % 2) for x in numlist]
-    num = "0b" + "".join(bitlist)
-    return int(num, 2)
+    return int("0b" + get_random_bits(webcam, 1024), 2)
 
 
 def get_rand_range(webcam, start: int, stop: int):
