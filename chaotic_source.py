@@ -1,3 +1,4 @@
+import logging
 import math
 import cv2
 
@@ -13,7 +14,7 @@ def get_random_bits(webcam, rang):
     numlist = []
     for i in frame.tolist():
         numlist.extend(i)
-    return "".join([str(x % 2) for x in numlist])
+    return "".join([str(x % 2) for x in numlist[:rang.bit_length()]])
 
 
 def get_rand_large(webcam):
@@ -32,6 +33,7 @@ def get_int_range(webcam, start: int, stop: int):
     rang = (stop-start)
     num = int("0b" + get_random_bits(webcam, rang), 2)
     while num > rang:
+        logging.info("Requested number between %d and %d, got %d instead" % (start, stop, num))
         num = int("0b" + get_random_bits(webcam, rang), 2)
     return start + num
 

@@ -5,8 +5,7 @@ from chaotic_source import get_int_range as rand, get_rand_range as rand_r, \
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-from random import random
-from RSA import is_prime
+import os
 
 
 def demo_dist(min, max, amount):
@@ -43,26 +42,20 @@ def demo_pi(amount):
     pi = 4*count/amount
     print("pi is %f\nmargin of error is %.4f" % (pi, math.fabs(math.pi-pi)/math.pi))
 
-"""
-from chaotic_source import get_int_range as rand
-import cv2
-import numpy
-cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-array = []
-for i in range(192):
-    array.append(rand(cam, 0, 255))
-print(numpy.array(array))
-frame = numpy.ndarray(shape=(8, 8, 3), buffer=)
-print(cv2.imwrite("demo_im.png", frame))
-cam.release()
 
-"""
-if __name__ == '__main__':
-    logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
+def demo_pic(name):
     cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    rang = (1 - 0)
-    num = int("0b" + rand_b(cam, rang), 2)
-    pct = num / (1 << num.bit_length())
-    print(num, "\n", 1 << num.bit_length(), "\n", pct)
+    array = []
+    for i in range(768):
+        array.append(rand(cam, 0, 255))
+    frame = np.array(array).reshape((16, 16, 3))
+    print(frame.dtype)
+    name = "demo_pics\\" + name
+    print(cv2.imwrite(name, frame))
     cam.release()
 
+
+if __name__ == '__main__':
+    logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
+    for i in range(20):
+        demo_pic("demo_pic_" + str(i) + ".png")
