@@ -6,7 +6,7 @@ PCT_MAX = 4294967295
 
 
 def get_random_bits(webcam, rang):
-    size = min(math.ceil(math.sqrt(rang.bit_length())), 6)
+    size = math.ceil(math.sqrt(rang.bit_length()))
     check, frame = webcam.read()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     frame = cv2.resize(frame, (size, size))
@@ -22,8 +22,9 @@ def get_rand_large(webcam):
 
 def get_rand_range(webcam, start: int, stop: int):
     rang = (stop-start)
-    num = int("0b" + get_random_bits(webcam, rang), 2)
-    pct = num/(1 << num.bit_length())
+    bits = get_random_bits(webcam, 36)
+    num = int("0b" + bits, 2)
+    pct = num/(1 << len(bits))
     return start + rang*pct
 
 
