@@ -1,26 +1,24 @@
 import math
 import logging
-from chaotic_source import get_int_range as rand, get_rand_range as rand_r, \
-    get_rand_large as rand_l, get_random_bits as rand_b
+from chaotic_source import get_int_range as rand, get_rand_range as rand_r
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-import os
 
 
-def demo_dist(min, max, amount):
+def demo_dist(start, end, amount):
     cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     x = []
     for i in range(amount):
-        x.append(rand(cam, min, max))
+        x.append(rand(cam, start, end))
     cam.release()
 
     # make data
 
     # plot:
     fig, ax = plt.subplots()
-    xmax = max-1
-    ymax = amount*10/(max-min)
+    xmax = end-1
+    ymax = amount*10/(end-start)
     ax.hist(x, bins=xmax, linewidth=0.02, edgecolor="white")
     ax.set(xlim=(0, xmax), xticks=np.arange(1, xmax),
            ylim=(0, ymax), yticks=np.arange(1, ymax))
@@ -57,5 +55,4 @@ def demo_pic(name):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
-    for i in range(20):
-        demo_pic("demo_pic_" + str(i) + ".png")
+    demo_pic("demo_pic" + ".png")
