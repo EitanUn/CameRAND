@@ -1,3 +1,5 @@
+import base64
+
 from chaotic_source import get_int_range as rand
 
 
@@ -57,3 +59,72 @@ def is_prime(num, webcam, accuracy=100):
 
     # If all else fails, call rabinMiller() to determine if num is a prime.
     return rabin_miller(num, webcam, accuracy)
+
+
+def gcd(a, b):
+    while a > 0 and b > 0:
+        if a > b:
+            a = a % b
+        else:
+            b = b % a
+    return max(a, b)
+
+
+def lcm(a, b):
+    return abs(a*b)/gcd(a, b)
+
+
+def extended_euclidean_algorithm(a, b):
+    """
+    extended_euclidean_algorithm(a, b)
+
+    The result is the largest common divisor for a and b.
+
+    :param a: integer number
+    :param b: integer number
+    :return:  the largest common divisor for a and b
+    """
+
+    if a == 0:
+        return b, 0, 1
+    else:
+        g, y, x = extended_euclidean_algorithm(b % a, a)
+        return g, x - (b // a) * y, y
+
+
+def modular_inverse(e, t):
+    """
+    modular_inverse(e, t)
+
+    Counts modular multiplicative inverse for e and t.
+
+    :param e: in this case e is a public key exponent
+    :param t: and t is an Euler function
+    :return:  the result of modular multiplicative inverse for e and t
+    """
+
+    g, x, y = extended_euclidean_algorithm(e, t)
+
+    if g != 1:
+        raise Exception('Modular inverse does not exist')
+    else:
+        return x % t
+
+
+def rsa(p, q):
+    n = p * q
+    lam_n = lcm(p-1, q-1)
+    e = 65537
+    assert gcd(e, lam_n) == 1
+    d = pow(e, -1, lam_n)
+    public_key(e, n)
+    private_key(d, n)
+
+
+def public_key(exponent, modulus):
+    key = '00000007' + 'ssh-rsa'
+    key += str(len(hex(exponent)) / 2).zfill(8) + str(hex(exponent))
+    key += str(len(hex(modulus)) / 2).zfill(8) + str(hex(modulus))
+    key_bytes = key.encode('ascii')
+    base64_bytes = base64.b64encode(key_bytes)
+    key_base64 = base64_bytes.decode('ascii')
