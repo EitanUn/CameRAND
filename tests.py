@@ -3,7 +3,8 @@ import logging
 from chaotic_source import get_int_range as rand, get_rand_range as rand_r
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+# import cv2
+from RSA import rsa
 
 
 def demo_dist(start, end, amount):
@@ -55,4 +56,7 @@ def demo_pic(name):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
-    demo_pic("demo_pic" + ".png")
+    with open("primes for now", "r") as file:
+        p = int(file.readline())
+        q = int(file.readline())
+    rsa(p, q, ".ssh")

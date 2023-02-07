@@ -1,4 +1,5 @@
 import base64
+import os.path
 
 from chaotic_source import get_int_range as rand
 
@@ -71,7 +72,7 @@ def gcd(a, b):
 
 
 def lcm(a, b):
-    return abs(a*b)/gcd(a, b)
+    return abs(a*b)//gcd(a, b)
 
 
 def extended_euclidean_algorithm(a, b):
@@ -111,20 +112,35 @@ def modular_inverse(e, t):
         return x % t
 
 
-def rsa(p, q):
+def rsa(p, q, dir):
     n = p * q
     lam_n = lcm(p-1, q-1)
     e = 65537
     assert gcd(e, lam_n) == 1
     d = pow(e, -1, lam_n)
-    public_key(e, n)
-    private_key(d, n)
+    public_key(e, n, dir)
+    private_key(d, n, dir)
 
 
-def public_key(exponent, modulus):
+def public_key(exponent, modulus, dir):
+    key = 'ssh-rsa'
+    key += str(len(hex(exponent)) / 2).zfill(8) + str(hex(exponent))
+    key += str(len(hex(modulus)) / 2).zfill(8) + str(hex(modulus))
+    key_bytes = key.encode('ascii')
+    base64_bytes = base64.b64encode(key_bytes)
+    key_base64 = base64_bytes.decode('ascii')
+    with open(os.path.join(dir, "id_rsa.pub"), "w") as file:
+        file.write("---- BEGIN SSH2 PUBLIC KEY ----\nssh-rsa")
+        file.write(key_base64)
+        file.write("\n---- END SSH2 PUBLIC KEY ----")
+
+
+def private_key(exponent, modulus, dir):
     key = '00000007' + 'ssh-rsa'
     key += str(len(hex(exponent)) / 2).zfill(8) + str(hex(exponent))
     key += str(len(hex(modulus)) / 2).zfill(8) + str(hex(modulus))
     key_bytes = key.encode('ascii')
     base64_bytes = base64.b64encode(key_bytes)
     key_base64 = base64_bytes.decode('ascii')
+    with open(os.path.join(dir, "id_rsa"), "w") as file:
+        file.write(key_base64)
