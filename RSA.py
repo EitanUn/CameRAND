@@ -1,5 +1,6 @@
 import base64
-import os.path
+from os.path import join
+from Crypto.PublicKey import RSA
 
 from chaotic_source import get_int_range as rand
 
@@ -118,29 +119,20 @@ def rsa(p, q, dir):
     e = 65537
     assert gcd(e, lam_n) == 1
     d = pow(e, -1, lam_n)
-    public_key(e, n, dir)
-    private_key(d, n, dir)
+    assert (e*d) % lam_n == 1
+    public_key(n, e, dir)
+    private_key(n, e, d, p, q, dir)
 
 
-def public_key(exponent, modulus, dir):
-    key = 'ssh-rsa'
-    key += str(len(hex(exponent)) / 2).zfill(8) + str(hex(exponent))
-    key += str(len(hex(modulus)) / 2).zfill(8) + str(hex(modulus))
-    key_bytes = key.encode('ascii')
-    base64_bytes = base64.b64encode(key_bytes)
-    key_base64 = base64_bytes.decode('ascii')
-    with open(os.path.join(dir, "id_rsa.pub"), "w") as file:
-        file.write("---- BEGIN SSH2 PUBLIC KEY ----\nssh-rsa")
-        file.write(key_base64)
-        file.write("\n---- END SSH2 PUBLIC KEY ----")
+def public_key(modulus, exponent, dir):
+    key = RSA.construct((modulus, exponent))
+    assert not key.has_private()
+    with open(join(dir, "id_rsa.pub"), "wb") as file:
+        file.write(key.exportKey(format='OpenSSH'))
 
 
-def private_key(exponent, modulus, dir):
-    key = '00000007' + 'ssh-rsa'
-    key += str(len(hex(exponent)) / 2).zfill(8) + str(hex(exponent))
-    key += str(len(hex(modulus)) / 2).zfill(8) + str(hex(modulus))
-    key_bytes = key.encode('ascii')
-    base64_bytes = base64.b64encode(key_bytes)
-    key_base64 = base64_bytes.decode('ascii')
-    with open(os.path.join(dir, "id_rsa"), "w") as file:
-        file.write(key_base64)
+def private_key(modulus, exponent, priv_exp, p, q, dir):
+    key = RSA.construct((modulus, exponent, priv_exp, p, q))
+    assert key.has_private()
+    with open(join(dir, "id_rsa"), "wb") as file:
+        file.write(key.exportKey())
