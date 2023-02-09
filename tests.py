@@ -1,6 +1,5 @@
 import math
 import logging
-from chaotic_source import get_int_range as rand, get_rand_range as rand_r
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2

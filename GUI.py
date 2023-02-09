@@ -10,9 +10,9 @@ class Gui(tk.Tk):
     def __init__(self, *args, **kwargs):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
-
         # creating a container
         container = tk.Frame(self)
+
         container.pack(side="top", fill="both", expand=True)
 
         container.grid_rowconfigure(0, weight=1)
@@ -49,26 +49,33 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # label of frame Layout 2
-        label = ttk.Label(self, text="Startpage", font=LARGEFONT)
+        label = ttk.Label(self, text="CameRAND", font=LARGEFONT)
 
         # putting the grid in its place by using
         # grid
-        label.grid(row=0, column=4, padx=10, pady=10)
+        label.grid(row=2, column=9, padx=10, pady=10)
 
-        button1 = ttk.Button(self, text="Page 1",
+        button1 = ttk.Button(self, text="SSH Client",
                              command=lambda: controller.show_frame(Page1))
 
         # putting the button in its place by
         # using grid
-        button1.grid(row=1, column=1, padx=10, pady=10)
+        button1.grid(row=5, column=1, padx=10, pady=10)
 
-        ## button to show frame 2 with text layout2
-        button2 = ttk.Button(self, text="Page 2",
+        # button to show frame 2 with text layout2
+        button2 = ttk.Button(self, text="RNG",
                              command=lambda: controller.show_frame(Page2))
 
         # putting the button in its place by
         # using grid
-        button2.grid(row=2, column=1, padx=10, pady=10)
+        button2.grid(row=5, column=2, padx=10, pady=10)
+
+        button2 = ttk.Button(self, text="Chat Client",
+                             command=lambda: controller.show_frame(Page2))
+
+        # putting the button in its place by
+        # using grid
+        button2.grid(row=5, column=3, padx=10, pady=10)
 
 
 # second window frame page1
@@ -77,7 +84,7 @@ class Page1(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = ttk.Label(self, text="Page 1", font=LARGEFONT)
-        label.grid(row=0, column=4, padx=10, pady=10)
+        label.grid(row=0, column=4, padx=400, pady=200)
 
         # button to show frame 2 with text
         # layout2
@@ -126,4 +133,6 @@ class Page2(tk.Frame):
 
 # Driver Code
 app = Gui()
+app.minsize(1200, 675)
+app.maxsize(1200, 675)
 app.mainloop()

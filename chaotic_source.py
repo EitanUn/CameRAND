@@ -5,37 +5,46 @@ import cv2
 
 PCT_MAX = 4294967295
 
+class Random:
+    def __init__(self):
+        self.cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-def get_random_bits(webcam, rang):
-    size = math.ceil(math.sqrt(rang.bit_length()))
-    check, frame = webcam.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame = cv2.resize(frame, (size, size))
-    numlist = []
-    for i in frame.tolist():
-        numlist.extend(i)
-    return "".join([str(x % 2) for x in numlist[:rang.bit_length()]])
+    def __del__(self):
+        self.cam.release()
 
+    def pause(self):
+        self.cam.release()
 
-def get_rand_large(webcam):
-    return int("0b" + get_random_bits(webcam, 1024), 2)
+    def cont(self):
+        self.cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
+    def get_random_bits(self, rang):
+        size = math.ceil(math.sqrt(rang.bit_length()))
+        check, frame = self.cam.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.resize(frame, (size, size))
+        numlist = []
+        for i in frame.tolist():
+            numlist.extend(i)
+        return "".join([str(x % 2) for x in numlist[:rang.bit_length()]])
 
-def get_rand_range(webcam, start: int, stop: int):
-    rang = (stop-start)
-    bits = get_random_bits(webcam, 36)
-    num = int("0b" + bits, 2)
-    pct = num/(1 << len(bits))
-    return start + rang*pct
+    def get_rand_large(self):
+        return int("0b" + self.get_random_bits(1024), 2)
 
+    def get_rand_range(self, start: int, stop: int):
+        rang = (stop-start)
+        bits = self.get_random_bits(36)
+        num = int("0b" + bits, 2)
+        pct = num/(1 << len(bits))
+        return start + rang*pct
 
-def get_int_range(webcam, start: int, stop: int):
-    rang = (stop-start)
-    num = int("0b" + get_random_bits(webcam, rang), 2)
-    while num > rang:
-        logging.info("Requested number between %d and %d, got %d instead" % (start, stop, num))
-        num = int("0b" + get_random_bits(webcam, rang), 2)
-    return start + num
+    def get_int_range(self, start: int, stop: int):
+        rang = (stop-start)
+        num = int("0b" + self.get_random_bits(rang), 2)
+        while num > rang:
+            logging.info("Requested number between %d and %d, got %d instead" % (start, stop, num))
+            num = int("0b" + self.get_random_bits(rang), 2)
+        return start + num
 
 
 if __name__ == '__main__':

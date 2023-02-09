@@ -1,11 +1,9 @@
-import base64
-from os.path import join
-from Crypto.PublicKey import RSA
-
-from chaotic_source import get_int_range as rand
+from files import private_key, public_key, add_prime
+from chaotic_source import Random
 
 
-def rabin_miller(num, webcam, accuracy):
+def rabin_miller(num, accuracy):
+    rand = Random()
     # Returns True if num is a prime number.
 
     s = num - 1
@@ -17,20 +15,22 @@ def rabin_miller(num, webcam, accuracy):
         t += 1
 
     for trials in range(accuracy):  # try to falsify num's primality
-        a = rand(webcam, 2, num - 1)
+        a = rand.get_int_range(2, num - 1)
         v = pow(a, s, num)
         if v != 1:  # this test does not apply if v is 1.
             i = 0
             while v != (num - 1):
                 if i == t - 1:
+                    rand.pause()
                     return False
                 else:
                     i = i + 1
                     v = (v ** 2) % num
+    rand.pause()
     return True
 
 
-def is_prime(num, webcam, accuracy=100):
+def is_prime(num, accuracy=100):
     # Return True if num is a prime number. This function does a quicker
     # prime number check before calling rabinMiller().
 
@@ -60,7 +60,7 @@ def is_prime(num, webcam, accuracy=100):
             return False
 
     # If all else fails, call rabinMiller() to determine if num is a prime.
-    return rabin_miller(num, webcam, accuracy)
+    return rabin_miller(num, accuracy)
 
 
 def gcd(a, b):
@@ -124,15 +124,8 @@ def rsa(p, q, dir):
     private_key(n, e, d, p, q, dir)
 
 
-def public_key(modulus, exponent, dir):
-    key = RSA.construct((modulus, exponent))
-    assert not key.has_private()
-    with open(join(dir, "id_rsa.pub"), "wb") as file:
-        file.write(key.exportKey(format='OpenSSH'))
-
-
-def private_key(modulus, exponent, priv_exp, p, q, dir):
-    key = RSA.construct((modulus, exponent, priv_exp, p, q))
-    assert key.has_private()
-    with open(join(dir, "id_rsa"), "wb") as file:
-        file.write(key.exportKey())
+def idle_prime():
+    rand = Random()
+    num = rand.get_rand_large()
+    if is_prime(num):
+        add_prime(num)
