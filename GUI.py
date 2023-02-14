@@ -125,14 +125,14 @@ class Collector(tk.Frame):
         # button to show frame 3 with text
         # layout3
         button1 = ttk.Button(self, text="\nStart Collector\n",
-                             command=self._coll.start)
+                             command=lambda: self._coll.start())
 
         # putting the button in its place by
         # using grid
         button1.grid(row=2, column=1, padx=10, pady=10)
 
         button2 = ttk.Button(self, text="\nStop Collector\n",
-                             command=self.stop(controller))
+                             command=lambda: self.stop(controller))
 
         # putting the button in its place by
         # using grid
@@ -141,7 +141,6 @@ class Collector(tk.Frame):
     def stop(self, controller):
         self._done.set()
         self._coll.join()
-        print("thread joined")
         controller.show_frame(SSH)
 
 
@@ -170,6 +169,7 @@ class Page2(tk.Frame):
         # putting the button in its place by
         # using grid
         button2.grid(row=2, column=1, padx=10, pady=10)
+
 
 # Driver Code
 if __name__ == '__main__':
