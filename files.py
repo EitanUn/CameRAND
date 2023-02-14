@@ -2,7 +2,8 @@ from os.path import join
 from Crypto.PublicKey import RSA
 from pickle import dump, load
 from chaotic_source import Random
-from RSA import is_prime
+from RSA import is_prime, rsa
+from threading import Event
 
 
 def public_key(modulus, exponent, dir):
@@ -18,6 +19,11 @@ def private_key(modulus, exponent, priv_exp, p, q, dir):
     with open(join(dir, "id_rsa"), "wb") as file:
         file.write(key.exportKey())
 
+
+def keygen(p, q, dir):
+    n, e, d = rsa(p, q)
+    public_key(n, e, dir)
+    private_key(n, e, d, p, q, dir)
 
 def add_prime(num):
     with open("primes.bin", "rb") as file:
@@ -51,3 +57,13 @@ def get_primes():
             b = rand.get_rand_large()
     rand.pause()
     return a, b
+
+def idle_prime(event: Event):
+    rand = Random()
+    while True:
+        num = rand.get_rand_large()
+        if is_prime(num):
+            add_prime(num)
+        if event.is_set():
+            break
+    rand.pause()

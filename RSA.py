@@ -1,4 +1,3 @@
-from files import private_key, public_key, add_prime
 from chaotic_source import Random
 
 
@@ -113,19 +112,11 @@ def modular_inverse(e, t):
         return x % t
 
 
-def rsa(p, q, dir):
+def rsa(p, q):
     n = p * q
     lam_n = lcm(p-1, q-1)
     e = 65537
     assert gcd(e, lam_n) == 1
     d = pow(e, -1, lam_n)
     assert (e*d) % lam_n == 1
-    public_key(n, e, dir)
-    private_key(n, e, d, p, q, dir)
-
-
-def idle_prime():
-    rand = Random()
-    num = rand.get_rand_large()
-    if is_prime(num):
-        add_prime(num)
+    return n, e, d
