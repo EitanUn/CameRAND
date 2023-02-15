@@ -3,7 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-from RSA import rsa
+from chaotic_source import Random
 
 
 def demo_dist(start, end, amount):
@@ -42,20 +42,15 @@ def demo_pi(amount):
 
 
 def demo_pic(name):
-    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    rand = Random()
     array = []
     for i in range(768):
-        array.append(rand(cam, 0, 255))
+        array.append(rand.get_int_range(0, 255))
     frame = np.array(array).reshape((16, 16, 3))
     print(frame.dtype)
-    name = "demo_pics\\" + name
     print(cv2.imwrite(name, frame))
-    cam.release()
+    rand.pause()
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename="testlogs.log", level=logging.DEBUG)
-    with open("primes for now", "r") as file:
-        p = int(file.readline())
-        q = int(file.readline())
-    rsa(p, q, ".ssh")
+    demo_pic("testpic.jpg")

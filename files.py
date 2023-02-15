@@ -20,10 +20,12 @@ def private_key(modulus, exponent, priv_exp, p, q, dir):
         file.write(key.exportKey())
 
 
-def keygen(p, q, dir):
+def keygen(dir):
+    p, q = get_primes()
     n, e, d = rsa(p, q)
     public_key(n, e, dir)
     private_key(n, e, d, p, q, dir)
+
 
 def add_prime(num):
     with open("primes.bin", "rb") as file:
