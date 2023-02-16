@@ -65,13 +65,16 @@ def get_primes():
 
 def idle_prime(event: Event):
     rand = Random()
+    rand.pause()
     while True:
+        rand.cont()
         num = rand.get_rand_large()
+        rand.pause()
         if is_prime(num):
             add_prime(num)
         if event.is_set():
             break
-    rand.pause()
+
 
 
 def save_image(im):

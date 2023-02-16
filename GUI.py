@@ -137,14 +137,14 @@ class Collector(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self._done = Event()
-        self._coll = Thread(target=idle_prime, args=(self._done, ))
+        self._coll = None
         label = ttk.Label(self, text="Beep Boop!\nCollecting...", font=LARGEFONT)
         label.grid(row=0, column=4, padx=10, pady=80)
 
         # button to show frame 3 with text
         # layout3
         button1 = ttk.Button(self, text="\n Start Collector \n",
-                             command=lambda: self._coll.start())
+                             command=lambda: self.start())
 
         # putting the button in its place by
         # using grid
@@ -156,6 +156,10 @@ class Collector(tk.Frame):
         # putting the button in its place by
         # using grid
         button2.grid(row=3, column=1, padx=10, pady=10)
+
+    def start(self):
+        self._coll = Thread(target=idle_prime, args=(self._done,))
+        self._coll.start()
 
     def stop(self, controller):
         self._done.set()
