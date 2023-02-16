@@ -4,6 +4,8 @@ from pickle import dump, load
 from chaotic_source import Random
 from RSA import is_prime, rsa
 from threading import Event
+import cv2
+from tkinter.filedialog import asksaveasfilename
 
 
 def public_key(modulus, exponent, dir):
@@ -60,6 +62,7 @@ def get_primes():
     rand.pause()
     return a, b
 
+
 def idle_prime(event: Event):
     rand = Random()
     while True:
@@ -69,3 +72,9 @@ def idle_prime(event: Event):
         if event.is_set():
             break
     rand.pause()
+
+
+def save_image(im):
+    save_path = asksaveasfilename(defaultextension='.png',
+                                  filetypes=[("png Files", "*.png")], title="Choose location")
+    cv2.imwrite(save_path, cv2.imread(im))

@@ -1,10 +1,11 @@
 import os
 import pickle
+import time
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread, Event
-from files import idle_prime, keygen
-from tkinter.filedialog import askdirectory, asksaveasfilename
+from files import idle_prime, keygen, save_image
+from tkinter.filedialog import askdirectory
 from chaotic_source import Random
 
 
@@ -165,6 +166,8 @@ class Collector(tk.Frame):
 class Rand(tk.Frame):
     def __init__(self, parent, controller: Gui):
         tk.Frame.__init__(self, parent)
+        self.random = Random()
+        self.random.pause()
         label1 = ttk.Label(self, text="RNG", font=("Verdana", 40))
         label1.place(x=1050, y=0)
 
@@ -180,30 +183,59 @@ class Rand(tk.Frame):
         self.endval = tk.StringVar()
         self.endval.set("End:")
 
-        start = ttk.Entry(self, textvariable=self.startval)
+        start = ttk.Entry(self, textvariable=self.startval, style='TButton')
         start.place(x=130, y=170, height=50, width=400)
 
-        end = ttk.Entry(self, textvariable=self.endval)
+        end = ttk.Entry(self, textvariable=self.endval, style='TButton')
         end.place(x=130, y=230, height=50, width=400)
 
         button2 = ttk.Button(self, text="Generate integer",
                              command=lambda: self.generate())
         button2.place(x=130, y=300, height=50, width=400)
-
+        self.resultval = "0"
         self.result = ttk.Button(self, text="Number: ",
-                                 command=controller.clipboard_append(self.resultval))
+                                 command=lambda: self.copy_val(controller))
+        self.result.place(x=130, y=450, height=60, width=400)
+
+        self.img = None
+        self.image = ttk.Label(self, style='TButton')
+        self.image.place(x=765, y=100, width=270, height=270)
+
+        button3 = ttk.Button(self, text="Generate Random Image",
+                             command=lambda: self.gen_image(), style='Small.TButton')
+        button3.place(x=765, y=415, width=270, height=60)
+
+        button4 = ttk.Button(self, text="Save...",
+                             command=lambda: save_image('temp.png'))
+        button4.place(x=825, y=500, width=150, height=60)
 
     def generate(self):
+        self.random.cont()
         start = self.startval.get().split(":")[-1]
         end = self.endval.get().split(":")[-1]
-        rand = Random()
         if not (start.isnumeric() and end.isnumeric() and int(start) < int(end)):
             val = "Invalid start/end"
         else:
-            val = rand.get_int_range(int(start), int(end))
-        self.resultval = val
-        self.result.configure(text=val)
+            val = self.random.get_int_range(int(start), int(end))
+        self.resultval = str(val)
+        self.result.configure(text=("Number: " + str(val)))
+        self.random.pause()
 
+    def copy_val(self, gui: Gui):
+        gui.clipboard_clear()
+        gui.clipboard_append(self.resultval)
+        self.result.configure(text="Copied to clipboard")
+        gui.update()
+        time.sleep(0.3)
+        self.result.configure(text=("Number: " + self.resultval))
+        gui.update()
+
+    def gen_image(self):
+        self.random.cont()
+        self.random.rand_pic("temp.png")
+        self.img = tk.PhotoImage(file="temp.png")
+        self.image.configure(image=self.img)
+        self.random.pause()
 
 
 
@@ -237,6 +269,7 @@ def style():
     s.configure('.', font=('Helvetica', 20))
     s.configure('TButton', background="#000000")
     s.configure(style='Large.TButton', font=('Helvetica', 40))
+    s.configure(style='Small.TButton', font=('Helvetica', 12))
 
 
 def main():

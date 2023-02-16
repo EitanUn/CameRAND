@@ -41,15 +41,7 @@ def demo_pi(amount):
     print("pi is %f\nmargin of error is %.4f" % (pi, math.fabs(math.pi-pi)/math.pi))
 
 
-def demo_pic(name):
-    rand = Random()
-    array = []
-    for i in range(768):
-        array.append(rand.get_int_range(0, 255))
-    frame = np.array(array).reshape((16, 16, 3))
-    print(frame.dtype)
-    print(cv2.imwrite(name, frame))
-    rand.pause()
+
 
 
 if __name__ == '__main__':
