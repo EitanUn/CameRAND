@@ -6,6 +6,7 @@ import numpy as np
 
 PCT_MAX = 4294967295
 
+
 class Random:
     def __init__(self):
         self.cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -48,20 +49,17 @@ class Random:
         return start + num
 
     def rand_pic(self, name):
-        channels = []
-        arr1 = []
-        arr2 = []
-        for i in range(16):
-            for j in range(16):
-                for k in range(3):
-                    channels.append(self.get_int_range(0, 255))
-                for k in range(16):
-                    arr1.extend(channels)
-                channels = []
-            for j in range(16):
-                arr2.extend(arr1)
-            arr1 = []
-        frame = np.array(arr2).reshape((256, 256, 3))
+        check, frame = self.cam.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.resize(frame, (96, 64))
+        numlist = []
+        for i in frame.tolist():
+            numlist.extend(i)
+        bits = "".join([str(x % 2) for x in numlist])
+        bytes = list(map(''.join, zip(*[iter(bits)] * 8)))
+        photo = np.array(bytes).reshape((16, 16, 3))
+        mul = np.ones(256).reshape((16, 16, 1))
+        frame = np.kron(photo, mul)
         cv2.imwrite(name, frame)
 
 
