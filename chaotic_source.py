@@ -51,14 +51,17 @@ class Random:
     def rand_pic(self, name):
         check, frame = self.cam.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = cv2.resize(frame, (96, 64))
+        frame = cv2.resize(frame, (64, 96))
         numlist = []
+        bytes = []
         for i in frame.tolist():
             numlist.extend(i)
         bits = "".join([str(x % 2) for x in numlist])
-        bytes = list(map(''.join, zip(*[iter(bits)] * 8)))
+        while bits:
+            bytes.append(int("0b" + bits[:8], 2))
+            bits = bits[8:]
         photo = np.array(bytes).reshape((16, 16, 3))
-        mul = np.ones(256).reshape((16, 16, 1))
+        mul = np.ones((16, 16, 1))
         frame = np.kron(photo, mul)
         cv2.imwrite(name, frame)
 
