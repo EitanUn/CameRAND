@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import time
@@ -220,7 +221,7 @@ class Rand(tk.Frame):
         if not (start.isnumeric() and end.isnumeric() and int(start) < int(end)):
             val = "Invalid start/end"
         else:
-            val = self.random.get_int_range(int(start), int(end))
+            val = self.random.get_int_range(int(start), int(end) - 1)
         self.resultval = str(val)
         self.result.configure(text=("Number: " + str(val)))
         self.random.pause()
@@ -289,4 +290,5 @@ def main():
 
 # Driver Code
 if __name__ == '__main__':
+    logging.basicConfig(filename="rsagen.log", level=logging.DEBUG)
     main()
