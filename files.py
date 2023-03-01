@@ -79,21 +79,21 @@ def get_primes():
             dump(primes, file)
     elif len(primes) == 1:
         a = primes.pop(0)
-        b = rand.get_rand_large()
-        while not is_prime(b):
-            b = rand.get_rand_large()
+        b = get_prime(rand)
         with open("primes.bin", "wb") as file:
             dump([], file)
     else:
-        a = rand.get_rand_large()
-        while not is_prime(a):
-            a = rand.get_rand_large()
-        b = rand.get_rand_large()
-        while not is_prime(b):
-            b = rand.get_rand_large()
+        a = get_prime(rand)
+        b = get_prime(rand)
     rand.pause()
     return a, b
 
+
+def get_prime(rand):
+    b = rand.get_rand_large()
+    while not is_prime(b, rand):
+        b = rand.get_rand_large()
+    return b
 
 def idle_prime(event: Event):
     """

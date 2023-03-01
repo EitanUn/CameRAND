@@ -267,8 +267,8 @@ class Rand(tk.Frame):
         A function to get 2 random numbers from the entries and generate an integer in between them
         """
         self.random.cont()
-        start = self.startval.get().split(":")[-1]
-        end = self.endval.get().split(":")[-1]
+        start = self.startval.get().split(":")[1]
+        end = self.endval.get().split(":")[1]
         if not (start.isnumeric() and end.isnumeric() and int(start) < int(end)):
             val = "Invalid start/end"
         else:

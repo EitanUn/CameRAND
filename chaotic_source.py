@@ -99,13 +99,13 @@ class Random:
         :param stop: end
         :return: a random int between start and end
         """
-        rang = (stop-start).bit_length()
-        num = int("0b" + self.get_random_bits(rang), 2)
+        rang = stop-start
+        num = int("0b" + self.get_random_bits(rang.bit_length()), 2)
         # since this is an int, the num is only the same bit size as rang, and I must make sure it is smaller than it
         # or request another number
         while num > rang:
-            logging.info("Requested number between %d and %d, got %d instead" % (start, stop, num))
-            num = int("0b" + self.get_random_bits(rang), 2)
+            logging.info("Requested number between %d and %d, got %d instead" % (start, stop, num + start))
+            num = int("0b" + self.get_random_bits(rang.bit_length()), 2)
         return start + num
 
     def rand_pic(self, name):

@@ -6,8 +6,7 @@ description: A file for
 from chaotic_source import Random
 
 
-def rabin_miller(num, accuracy):
-    rand = Random()
+def rabin_miller(num, accuracy, rand: Random):
     # Returns True if num is a prime number.
 
     s = num - 1
@@ -34,7 +33,7 @@ def rabin_miller(num, accuracy):
     return True
 
 
-def is_prime(num, accuracy=100):
+def is_prime(num, rand:Random, accuracy=100):
     # Return True if num is a prime number. This function does a quicker
     # prime number check before calling rabinMiller().
 
@@ -64,7 +63,7 @@ def is_prime(num, accuracy=100):
             return False
 
     # If all else fails, call rabinMiller() to determine if num is a prime.
-    return rabin_miller(num, accuracy)
+    return rabin_miller(num, accuracy, rand)
 
 
 def gcd(a, b):
