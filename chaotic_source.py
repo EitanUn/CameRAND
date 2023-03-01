@@ -52,7 +52,9 @@ class Random:
         # get the rough size of a square picture so that the number of pixels is around equal to the
         # number of required bits
         size = math.ceil(math.sqrt(rang))
+        assert self.cam.isOpened()
         check, frame = self.cam.read()
+        assert check == 1
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # check if the camera returned an image
         if frame is None:

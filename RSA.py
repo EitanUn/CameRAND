@@ -1,3 +1,8 @@
+"""
+Author: Eitan Unger
+Date: 29/02/23
+description: A file for
+"""
 from chaotic_source import Random
 
 

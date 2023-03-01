@@ -1,3 +1,8 @@
+"""
+Author: Eitan Unger
+Date: 29/02/23
+description: A file to build the client GUI
+"""
 import logging
 import os
 import pickle
@@ -9,13 +14,18 @@ from files import idle_prime, keygen, save_image
 from tkinter.filedialog import askdirectory
 from chaotic_source import Random
 
-
 LARGEFONT = ("Verdana", 80)
 
 
 class Gui(tk.Tk):
+    """
+    A class that holds the master GUI window
+    """
     # __init__ function for class tkinterApp
     def __init__(self, *args, **kwargs):
+        """
+        Init function that builds a window holding a single container, switching between each sub-window (frame)
+        """
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
         # creating a container
@@ -43,9 +53,10 @@ class Gui(tk.Tk):
 
         self.show_frame(StartPage)
 
-    # to display the current frame passed as
-    # parameter
     def show_frame(self, cont):
+        """
+        A function to display the frame passed as the parameter
+        """
         frame = self.frames[cont]
         frame.tkraise()
 
@@ -53,7 +64,13 @@ class Gui(tk.Tk):
 # first window frame startpage
 
 class StartPage(tk.Frame):
+    """
+    The start page frame
+    """
     def __init__(self, parent, controller):
+        """
+        init for the start page
+        """
         tk.Frame.__init__(self, parent)
 
         # label of frame Layout 2
@@ -91,8 +108,13 @@ class StartPage(tk.Frame):
 
 # second window frame page1
 class SSH(tk.Frame):
-
+    """
+    The SSH keygen frame
+    """
     def __init__(self, parent, controller):
+        """
+        init for the SSH keygen page
+        """
         tk.Frame.__init__(self, parent)
         self.path_info = ""
         label1 = ttk.Label(self, text="SSH", font=("Verdana", 40))
@@ -128,6 +150,9 @@ class SSH(tk.Frame):
         button3.place(y=350, height=200, x=350, width=500)
 
     def get_dir(self):
+        """
+        A function that gets a directory using tk dialogue and stores it in the frame object
+        """
         self.path_info = askdirectory()
         dirname = "Dir: " + self.path_info.split("/")[-1]
         self.button.configure(text=dirname)
@@ -135,7 +160,13 @@ class SSH(tk.Frame):
 
 # third window frame page2
 class Collector(tk.Frame):
+    """
+    The prime number collector frame
+    """
     def __init__(self, parent, controller):
+        """
+        init for the prime number collector page
+        """
         tk.Frame.__init__(self, parent)
         self._done = Event()
         self._coll = None
@@ -159,17 +190,29 @@ class Collector(tk.Frame):
         button2.grid(row=3, column=1, padx=10, pady=10)
 
     def start(self):
+        """
+        Function to start the prime collector thread
+        """
         self._coll = Thread(target=idle_prime, args=(self._done,))
         self._coll.start()
 
     def stop(self, controller):
+        """
+        function to stop the thread and exit the page back to the SSH keygen window
+        """
         self._done.set()
         self._coll.join()
         controller.show_frame(SSH)
 
 
 class Rand(tk.Frame):
+    """
+    The RNG frame
+    """
     def __init__(self, parent, controller: Gui):
+        """
+        init for the RNG page
+        """
         tk.Frame.__init__(self, parent)
         self.random = Random()
         self.random.pause()
@@ -177,7 +220,7 @@ class Rand(tk.Frame):
         label1.place(x=1050, y=0)
 
         button1 = ttk.Button(self, text="Home",
-                             command=lambda: controller.show_frame(StartPage))
+                             command=lambda: self.exit(controller))
         button1.place(x=10, y=10, height=150, width=200)
 
         sep = ttk.Separator(self, orient="vertical")
@@ -214,7 +257,15 @@ class Rand(tk.Frame):
                              command=lambda: save_image('temp.png'))
         button4.place(x=825, y=500, width=150, height=60)
 
+    def exit(self, controller):
+        if os.path.exists('temp.png'):
+            os.remove('temp.png')
+        controller.show_frame(StartPage)
+
     def generate(self):
+        """
+        A function to get 2 random numbers from the entries and generate an integer in between them
+        """
         self.random.cont()
         start = self.startval.get().split(":")[-1]
         end = self.endval.get().split(":")[-1]
@@ -227,6 +278,10 @@ class Rand(tk.Frame):
         self.random.pause()
 
     def copy_val(self, gui: Gui):
+        """
+        A function that copies the value of the button pressed, notifies the user through the
+        button text and later resets the button text
+        """
         gui.clipboard_clear()
         gui.clipboard_append(self.resultval)
         self.result.configure(text="Copied to clipboard")
@@ -236,6 +291,9 @@ class Rand(tk.Frame):
         gui.update()
 
     def gen_image(self):
+        """
+        A function to generate a random image and place it in the label created for it
+        """
         self.random.cont()
         self.random.rand_pic("temp.png")
         self.img = tk.PhotoImage(file="temp.png")
@@ -243,9 +301,14 @@ class Rand(tk.Frame):
         self.random.pause()
 
 
-
 class Chat(tk.Frame):
+    """
+    The chat page frame
+    """
     def __init__(self, parent, controller):
+        """
+        init for the chat main page
+        """
         tk.Frame.__init__(self, parent)
         label = ttk.Label(self, text="Page 2", font=LARGEFONT)
         label.grid(row=0, column=4, padx=10, pady=10)
@@ -270,6 +333,9 @@ class Chat(tk.Frame):
 
 
 def style():
+    """
+    A function holding all style changes
+    """
     s = ttk.Style()
     s.configure('.', font=('Helvetica', 20))
     s.configure('TButton', background="#000000")
@@ -278,6 +344,10 @@ def style():
 
 
 def main():
+    """
+    Main function- makes sure the primes database file exists, then creates the window,
+    sets its size and calls the main loop
+    """
     if not os.path.exists("primes.bin"):
         with open("primes.bin", "wb") as file:
             pickle.dump([], file)
@@ -290,5 +360,7 @@ def main():
 
 # Driver Code
 if __name__ == '__main__':
+    if os.path.exists('temp.png'):
+        os.remove('temp.png')
     logging.basicConfig(filename="rsagen.log", level=logging.DEBUG)
     main()
