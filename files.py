@@ -90,10 +90,15 @@ def get_primes():
 
 
 def get_prime(rand):
-    b = rand.get_rand_large()
+    """
+    A function to get a prime number based on a randomly generated number
+    :param rand: the random number generator object
+    """
+    b = rand.get_rand_large() | 1  # generate random int and make sure it is odd (only even prime is 2, not needed)
     while not is_prime(b, rand):
-        b = rand.get_rand_large()
+        b += 2  # if not prime, go to the next odd number until prime is found
     return b
+
 
 def idle_prime(event: Event):
     """
@@ -102,13 +107,9 @@ def idle_prime(event: Event):
     :param event: a flag to check if the thread should stop
     """
     rand = Random()
-    rand.pause()
     while True:
-        rand.cont()
-        num = rand.get_rand_large()
-        rand.pause()
-        if is_prime(num):
-            add_prime(num)
+        num = get_prime(rand)
+        add_prime(num)
         if event.is_set():
             return
 

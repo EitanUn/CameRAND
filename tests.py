@@ -1,30 +1,33 @@
-# import the opencv library
-import cv2
-import numpy
+from Crypto.PublicKey import RSA
 
 
-# define a video capture object
-vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-vid.release()
+def str_to_int(my_string):
+    num = 0
+    for ch in my_string:
+        num = (num << 8) + ord(ch)
+    return num
 
-while (True):
 
-    # Capture the video frame
-    # by frame
-    ret, frame = vid.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    print(numpy.shape(frame))
+def int_to_str(num):
+    str = ""
+    while num:
+        str += chr(num % 256)
+        num //= 256
+    return str[::-1]
 
-    # Display the resulting frame
-    cv2.imshow('frame', frame)
 
-    # the 'q' button is set as the
-    # quitting button you may use any
-    # desired button of your choice
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+with open("keys/id_rsa", 'r') as file:
+    private = RSA.importKey(file.read())
 
-# After the loop release the cap object
-vid.release()
-# Destroy all the windows
-cv2.destroyAllWindows()
+with open("keys/id_rsa.pub", 'r') as file:
+    public = RSA.importKey(file.read())
+
+message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut " \
+          "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris,"
+print(message)
+print(str_to_int(message))
+encrypted = pow(str_to_int(message), public.e, public.n)
+print(encrypted)
+message = pow(encrypted, private.d, private.n)
+print(message)
+print(int_to_str(message))

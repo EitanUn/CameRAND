@@ -24,16 +24,14 @@ def rabin_miller(num, accuracy, rand: Random):
             i = 0
             while v != (num - 1):
                 if i == t - 1:
-                    rand.pause()
                     return False
                 else:
                     i = i + 1
                     v = (v ** 2) % num
-    rand.pause()
     return True
 
 
-def is_prime(num, rand:Random, accuracy=100):
+def is_prime(num, rand: Random, accuracy=10):
     # Return True if num is a prime number. This function does a quicker
     # prime number check before calling rabinMiller().
 
