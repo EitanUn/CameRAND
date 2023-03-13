@@ -15,7 +15,7 @@ from tkinter.filedialog import askdirectory
 from chaotic_source import Random
 
 LARGEFONT = ("Verdana", 80)
-
+SERVER = ()
 
 class Gui(tk.Tk):
     """
@@ -310,26 +310,39 @@ class Chat(tk.Frame):
         init for the chat main page
         """
         tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Page 2", font=LARGEFONT)
-        label.grid(row=0, column=4, padx=10, pady=10)
 
-        # button to show frame 2 with text
-        # layout2
-        button1 = ttk.Button(self, text="Page 1",
-                             command=lambda: controller.show_frame(SSH))
+        label1 = ttk.Label(self, text="Chat", font=("Verdana", 40))
+        label1.place(x=1050, y=0)
 
-        # putting the button in its place by
-        # using grid
-        button1.grid(row=1, column=1, padx=10, pady=10)
-
-        # button to show frame 3 with text
-        # layout3
-        button2 = ttk.Button(self, text="Startpage",
+        button1 = ttk.Button(self, text="Home",
                              command=lambda: controller.show_frame(StartPage))
+        button1.place(x=10, y=10, height=150, width=200)
 
-        # putting the button in its place by
-        # using grid
-        button2.grid(row=2, column=1, padx=10, pady=10)
+        self.ip = tk.StringVar()
+        self.port = tk.StringVar()
+
+        label2 = ttk.Label(self, text="Server host name: (IPv4):", font=("Verdana", 15))
+        label3 = ttk.Label(self, text="port:", font=("Verdana", 15))
+
+        label2.place(x=400, y=200, width=300, height=40)
+        label3.place(x=725, y=200, width=60, height=40)
+
+        ip_ent = ttk.Entry(self, textvariable=self.ip, style='TButton', font=("Verdana", 15))
+        port_ent = ttk.Entry(self, textvariable=self.port, style='TButton', font=("Verdana", 15))
+
+        ip_ent.place(x=400, y=265, width=300, height=50)
+        port_ent.place(x=725, y=265, width=60, height=50)
+
+        button2 = ttk.Button(self, text="Connect",
+                             command=lambda: self.connect(controller))
+        button2.place(x=500, y=500, height=100, width=200)
+
+    def connect(self, root):
+        global SERVER
+        SERVER = (self.ip, self.port)
+        root.bind('<enter>', "send or whatever")  # continue here
+
+# make other chat window
 
 
 def style():

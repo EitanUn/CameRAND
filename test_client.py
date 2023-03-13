@@ -9,16 +9,14 @@ from tkinter import StringVar
 import select
 
 
-def client_thread(finished: Event, in_list: list, out_list: list):
+def client_thread(server_addr: tuple, finished: Event, in_list: list, out_list: list):
     """
     The main function- handles the game running
     :return: none
     """
-    ip = input("Enter server IP")
-    port = input("Enter server port")
     server_socket = socket.socket()
     try:
-        server_socket.connect((ip, port))
+        server_socket.connect(server_addr)
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket])
             if in_list:
@@ -60,4 +58,4 @@ def protocol_read(socket):
 
 
 if __name__ == '__main__':
-
+    pass
