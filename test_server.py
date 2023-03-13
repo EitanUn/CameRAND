@@ -1,53 +1,122 @@
 """
-Author: Nir Dweck
-Date: 25/10/21
-Description: a SSL server
+Author: Eitan Unger
+Date: 27/5/22
+description: Server for Cow006, manages game, runs infinitely
 """
+import functools
+import operator
 import socket
-import ssl
+import select
+import random
 
-IP_ADDR = '0.0.0.0'
-PORT = 8443
-QUEUE_LEN = 1
-PACKET_LEN = 1024
-CERT_FILE = 'certificate.crt'
-KEY_FILE = 'privateKey.key'
-MSG = 'have a nice day'
-EXIT_CMD = 'exit'
-EXIT_RES = 'by by'
+# --------------------------- CONSTANTS ---------------------------
+SERVER_IP = '0.0.0.0'
+SERVER_PORT = 20003
+LISTEN_SIZE = 5
+READ_SIZE = 3
+TIMEOUT = 60
+socket.setdefaulttimeout(TIMEOUT)
+
+# --------------------------- MAIN ---------------------------
 
 
 def main():
     """
-    listens for a single client connection.
-    receives commands from the client and answers with a single response.
-    once receives the 'exit' command, responses with 'by by' and exit's
+    every time a game is finished or aborted, set up a new game
+    :return: none
+    """
+    while True:
+        main_loop()
+
+
+def main_loop():
+    """
+    the main server loop, split into log in phase and game phase, with setup in between
+    restarts when an error is encountered or a game is finished
     :return: None
     """
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain(CERT_FILE, KEY_FILE)
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    open_client_sockets = []
+    client_addrs = {}
+    server_socket = socket.socket()
+    # log-in phase:
     try:
-        server_socket.bind((IP_ADDR, PORT))
-        server_socket.listen(QUEUE_LEN)
-        ssock = context.wrap_socket(server_socket, server_side=True)
-        conn, addr = ssock.accept()
-        try:
-            msg = conn.recv(PACKET_LEN).decode()
-            while msg != EXIT_CMD:
-                print('received ' + msg)
-                conn.send(MSG.encode())
-                msg = conn.recv(PACKET_LEN).decode()
-            conn.send(EXIT_RES.encode())
-            print('exiting')
-        except socket.error as sock_err:
-            print(sock_err)
-        finally:
-            conn.close()
-    except socket.error as sock_err:
-        print(sock_err)
+        server_socket.bind((SERVER_IP, SERVER_PORT))
+        server_socket.listen(LISTEN_SIZE)
+        while True:
+            rlist, wlist, xlist = select.select([server_socket] + open_client_sockets,
+                                                [], open_client_sockets)
+            # check for exception
+            for current_socket in xlist:
+                open_client_sockets.remove(current_socket)
+                current_socket.close()
+            for current_socket in rlist:
+                # check for new connection
+                if current_socket is server_socket:
+                    client_socket, client_address = current_socket.accept()
+                    client_addrs.update({client_socket, client_address[0]})
+                    open_client_sockets.append(client_socket)
+                    print("new client added")
+                    break
+                else:
+                    # receive data
+                    data = protocol_read(current_socket)
+                    # check if connection was aborted
+                    if data == "" or data == "a" or data == b'':
+                        # socket was closed
+                        open_client_sockets.remove(current_socket)
+                        current_socket.close()
+                    else:
+                        data = client_addrs[current_socket] + ": " + data
+                        send_available(open_client_sockets)
+                        for i in open_client_sockets:
+                            i.send(protocol_encode(data))
+    except socket.error as err:
+        abort(open_client_sockets)
+        print("error: " + str(err))
     finally:
         server_socket.close()
+
+# --------------------------- NETWORK FUNCS ---------------------------
+
+
+def protocol_encode(line):
+    """
+    Encodes message according to the protocol (length prefix and type prefix)
+    :param line: line to encode
+    :return:
+    """
+    return str(len(line)).zfill(3) + line  # add a 3-digit length prefix for protocol_read()
+
+
+def protocol_read(socket):
+    """
+    read the message (exact length) using the protocol
+    :param socket: socket to read from
+    :return: message read from socket, parsed
+    """
+    len = socket.recv(3).decode()  # get length
+    if len == "" or len == b'':  # check for error
+        return len
+    return socket.recv(int(len)).decode()  # read the message
+
+
+def send_available(open_client_sockets):
+    rlist, wlist, xlist = select.select(open_client_sockets,
+                                        open_client_sockets, open_client_sockets)
+    for err in xlist:
+        open_client_sockets.remove(err)
+        err.close()
+    while len(wlist) != len(open_client_sockets):
+        rlist, wlist, xlist = select.select(open_client_sockets,
+                                            open_client_sockets, open_client_sockets)
+        for err in xlist:
+            open_client_sockets.remove(err)
+            err.close()
+
+
+def abort(sockets):
+    for i in sockets:
+        i.close()
 
 
 if __name__ == '__main__':

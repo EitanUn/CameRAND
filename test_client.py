@@ -1,48 +1,63 @@
 """
-Author: Nir Dweck
-Date: 25/10/21
-Description: a SSL client
+Author: Eitan Unger
+Date: 27/5/22
+description: Client for Cow006, manages graphics, runs for the length of one game then shuts down
 """
 import socket
-import ssl
-
-HOST_NAME = '127.0.0.1'
-PORT = 8443
-MSG_LEN = 1024
-EXIT_CMD = 'by by'
-USER_INPUT = 'please enter a command'
+from threading import Event
+from tkinter import StringVar
+import select
 
 
-def main():
+def client_thread(finished: Event, in_list: list, out_list: list):
     """
-    creates a secure connection with the server, receives commands, sends them ot the server and receives a response
-    from the server.
-    exits when receives the 'by by' response
-    :return: None
+    The main function- handles the game running
+    :return: none
     """
-    # create the ssl context
-    context = ssl.create_default_context()
-    # allow self signed certificate
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    my_socket = socket.socket()
-    conn = context.wrap_socket(my_socket, server_hostname=HOST_NAME)
+    ip = input("Enter server IP")
+    port = input("Enter server port")
+    server_socket = socket.socket()
     try:
-        conn.connect((HOST_NAME, PORT))
-        msg = input(USER_INPUT)
-        while True:
-            conn.send(msg.encode())
-            answer = conn.read(MSG_LEN).decode()
-            print(answer)
-            if answer == EXIT_CMD:
-                break
-            msg = input(USER_INPUT)
-        print('exiting')
-    except socket.error as sock_err:
-        print(sock_err)
+        server_socket.connect((ip, port))
+        while not finished.is_set():
+            rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket])
+            if in_list:
+                while len(wlist) != 1:
+                    rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket])
+                for i in in_list:
+                    server_socket.send(protocol_encode(i))
+                    in_list.remove(i)
+            else:
+                if rlist:
+                    out_list.append(protocol_read(server_socket))
+    except socket.error as err:
+        print("error: " + str(err))
     finally:
-        conn.close()
+        server_socket.close()
+
+# --------------------------- NETWORK FUNCS ---------------------------
+
+
+def protocol_encode(line):
+    """
+    Encodes message according to the protocol (length prefix and type prefix)
+    :param line: line to encode
+    :return:
+    """
+    return str(len(line)).zfill(3) + line  # add a 3-digit length prefix for protocol_read()
+
+
+def protocol_read(socket):
+    """
+    read the message (exact length) using the protocol
+    :param socket: socket to read from
+    :return: message read from socket, parsed
+    """
+    len = socket.recv(3).decode()  # get length
+    if len == "" or len == b'':  # check for error
+        return len
+    return socket.recv(int(len)).decode()  # read the message
 
 
 if __name__ == '__main__':
-    main()
+
