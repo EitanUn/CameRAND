@@ -44,7 +44,7 @@ def main_loop():
         server_socket.listen(LISTEN_SIZE)
         while True:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets,
-                                                [], open_client_sockets)
+                                                [], open_client_sockets, 0.01)
             # check for exception
             for current_socket in xlist:
                 open_client_sockets.remove(current_socket)
@@ -103,13 +103,13 @@ def protocol_read(socket):
 
 def send_available(open_client_sockets):
     rlist, wlist, xlist = select.select(open_client_sockets,
-                                        open_client_sockets, open_client_sockets)
+                                        open_client_sockets, open_client_sockets, 0.01)
     for err in xlist:
         open_client_sockets.remove(err)
         err.close()
     while len(wlist) != len(open_client_sockets):
         rlist, wlist, xlist = select.select(open_client_sockets,
-                                            open_client_sockets, open_client_sockets)
+                                            open_client_sockets, open_client_sockets, 0.01)
         for err in xlist:
             open_client_sockets.remove(err)
             err.close()

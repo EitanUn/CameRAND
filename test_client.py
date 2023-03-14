@@ -19,10 +19,10 @@ def client_thread(server_addr: tuple, finished: Event, in_list: list, text: tkin
     try:
         server_socket.connect(server_addr)
         while not finished.is_set():
-            rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket])
+            rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket], 0.01)
             if in_list:
                 while len(wlist) != 1:
-                    rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket])
+                    rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket], 0.01)
                 for i in in_list:
                     server_socket.send(protocol_encode(i))
                     in_list.remove(i)

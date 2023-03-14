@@ -30,7 +30,8 @@ class ChatClient:
         self.window.maxsize(1200, 675)
         self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))
         self.chat.configure(state="disabled")
-        self.network_thread = Thread(target=client_thread, args=((ip, int(port)), self.finished, self.in_buf, self.chat))
+        self.network_thread = Thread(target=client_thread,
+                                     args=((ip, int(port)), self.finished, self.in_buf, self.chat))
         self.textvar = tk.StringVar()
         self.ent = ttk.Entry(self.window, textvariable=self.textvar, font=("Verdana", 10))
         hostname = socket.gethostname()
@@ -40,15 +41,14 @@ class ChatClient:
         self.chat.place(x=200, y=20, width=950, height=600)
         self.ent.place(x=200, y=625, width=950, height=40)
         self.data.place(x=25, y=100, width=150, height=400)
-        self.window.bind('<Enter', self.send())
-
+        self.window.bind('<Enter>', self.send)
         self.network_thread.start()
         self.window.mainloop()
 
         self.finished.set()
         self.network_thread.join()
 
-    def send(self):
+    def send(self, event):
         self.in_buf.append(self.textvar.get())
         self.textvar.set("")
 
