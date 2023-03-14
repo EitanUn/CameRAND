@@ -1,4 +1,4 @@
-from Crypto.PublicKey import RSA
+"""from Crypto.PublicKey import RSA
 
 
 def str_to_int(my_string):
@@ -31,3 +31,9 @@ print(encrypted)
 message = pow(encrypted, private.d, private.n)
 print(message)
 print(int_to_str(message))
+"""
+
+
+from GUI import ChatClient
+
+a = ChatClient("127.0.0.1", "20003")

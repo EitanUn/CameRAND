@@ -4,12 +4,13 @@ Date: 27/5/22
 description: Client for Cow006, manages graphics, runs for the length of one game then shuts down
 """
 import socket
+import tkinter.scrolledtext
 from threading import Event
-from tkinter import StringVar
+from tkinter import ttk
 import select
 
 
-def client_thread(server_addr: tuple, finished: Event, in_list: list, out_list: list):
+def client_thread(server_addr: tuple, finished: Event, in_list: list, text: tkinter.scrolledtext.ScrolledText):
     """
     The main function- handles the game running
     :return: none
@@ -27,7 +28,15 @@ def client_thread(server_addr: tuple, finished: Event, in_list: list, out_list: 
                     in_list.remove(i)
             else:
                 if rlist:
-                    out_list.append(protocol_read(server_socket))
+                    data = protocol_read(server_socket)
+                    if data == "":
+                        text.configure(state="normal")
+                        text.insert(tkinter.END, "---------------------------Server Closed------------------")
+                        text.config(state="disabled")
+                        break
+                    text.configure(state="normal")
+                    text.insert(tkinter.END, data)
+                    text.config(state="disabled")
     except socket.error as err:
         print("error: " + str(err))
     finally:
@@ -42,7 +51,7 @@ def protocol_encode(line):
     :param line: line to encode
     :return:
     """
-    return str(len(line)).zfill(3) + line  # add a 3-digit length prefix for protocol_read()
+    return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
 def protocol_read(socket):

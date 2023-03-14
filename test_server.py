@@ -53,13 +53,14 @@ def main_loop():
                 # check for new connection
                 if current_socket is server_socket:
                     client_socket, client_address = current_socket.accept()
-                    client_addrs.update({client_socket, client_address[0]})
+                    client_addrs.update({client_socket: client_address[0]})
                     open_client_sockets.append(client_socket)
                     print("new client added")
                     break
                 else:
                     # receive data
                     data = protocol_read(current_socket)
+                    print("Received: " + data)
                     # check if connection was aborted
                     if data == "" or data == "a" or data == b'':
                         # socket was closed
@@ -85,7 +86,7 @@ def protocol_encode(line):
     :param line: line to encode
     :return:
     """
-    return str(len(line)).zfill(3) + line  # add a 3-digit length prefix for protocol_read()
+    return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
 def protocol_read(socket):
