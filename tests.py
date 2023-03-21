@@ -36,4 +36,4 @@ print(int_to_str(message))
 
 from GUI import ChatClient
 
-a = ChatClient("127.0.0.1", "20003")
+a = ChatClient("127.0.0.1", "20003", 'Eitan')

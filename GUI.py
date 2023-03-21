@@ -21,36 +21,57 @@ SERVER = ()
 
 
 class ChatClient:
-    def __init__(self, ip, port):
+    """
+    A chat client class for the chat function of the CameRAND app
+    """
+    def __init__(self, ip, port, name):
+        """
+        Init method for the chat client
+        """
         self.finished = Event()
         self.in_buf = []
-
+        name_f = [name]
         self.window = tk.Tk()
         self.window.minsize(1200, 675)
         self.window.maxsize(1200, 675)
         self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))
         self.chat.configure(state="disabled")
         self.network_thread = Thread(target=client_thread,
-                                     args=((ip, int(port)), self.finished, self.in_buf, self.chat))
+                                     args=((ip, int(port)), name_f, self.finished, self.in_buf, self.chat))
         self.textvar = tk.StringVar()
-        self.ent = ttk.Entry(self.window, textvariable=self.textvar, font=("Verdana", 10))
-        hostname = socket.gethostname()
-        addr = socket.gethostbyname(hostname)
-        info = f"My Ip: \n%s\n\n\nServer-\n\nip: \n%s\n\nport: \n%s" % (addr, ip, port)
+        self.ent = ttk.Entry(self.window, textvariable=self.textvar, font=("Verdana", 10),
+                             validate='key', validatecommand=self.validatecommand)
+
+        info = f"My name: \n%s\n\n\nServer-\n\nip: \n%s\n\nport: \n%s" % (name, ip, port)
+
         self.data = ttk.Label(self.window, text=info)
+        self.send_but = ttk.Button(self.window, text="Send", command=lambda: self.send())
+
         self.chat.place(x=200, y=20, width=950, height=600)
-        self.ent.place(x=200, y=625, width=950, height=40)
+        self.ent.place(x=200, y=625, width=900, height=40)
         self.data.place(x=25, y=100, width=150, height=400)
-        self.window.bind('<Enter>', self.send)
+        self.send_but.place(x=1100, y=625, width=50, height=40)
+
         self.network_thread.start()
         self.window.mainloop()
-
         self.finished.set()
         self.network_thread.join()
 
-    def send(self, event):
-        self.in_buf.append(self.textvar.get())
-        self.textvar.set("")
+    def send(self):
+        """
+        sends a message from the input entry to the client thread's input
+        """
+        if not self.textvar.get() == "":
+            # since pasting a message bypasses validate, send only 500 chars
+            self.in_buf.append(self.textvar.get()[0:500])
+            self.textvar.set("")
+
+    def validatecommand(self):
+        """
+        validate function for the input
+        """
+        return len(self.textvar.get()) < 500
+
 
 class Gui(tk.Tk):
     """

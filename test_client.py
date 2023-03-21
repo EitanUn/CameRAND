@@ -10,7 +10,7 @@ from tkinter import ttk
 import select
 
 
-def client_thread(server_addr: tuple, finished: Event, in_list: list, text: tkinter.scrolledtext.ScrolledText):
+def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, text: tkinter.scrolledtext.ScrolledText):
     """
     The main function- handles the game running
     :return: none
@@ -18,25 +18,31 @@ def client_thread(server_addr: tuple, finished: Event, in_list: list, text: tkin
     server_socket = socket.socket()
     try:
         server_socket.connect(server_addr)
+        server_socket.send(protocol_encode(name[0], True))
+        out_list = []
         while not finished.is_set():
-            rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket], 0.01)
-            if in_list:
-                while len(wlist) != 1:
-                    rlist, wlist, xlist = select.select([server_socket], [server_socket], [server_socket], 0.01)
+            rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
+
+            if rlist:
+                data = protocol_read(server_socket)
+                if data == "":
+                    text.configure(state="normal")
+                    text.insert(tkinter.END, "---------------------------Server Closed------------------")
+                    text.config(state="disabled")
+                    break
+                text.configure(state="normal")
+                text.insert(tkinter.END, data + "\n")
+                text.config(state="disabled")
+
+            if wlist:
                 for i in in_list:
                     server_socket.send(protocol_encode(i))
                     in_list.remove(i)
-            else:
-                if rlist:
-                    data = protocol_read(server_socket)
-                    if data == "":
-                        text.configure(state="normal")
-                        text.insert(tkinter.END, "---------------------------Server Closed------------------")
-                        text.config(state="disabled")
-                        break
-                    text.configure(state="normal")
-                    text.insert(tkinter.END, data)
-                    text.config(state="disabled")
+                out_list = []
+
+            if in_list:
+                out_list.append(server_socket)
+
     except socket.error as err:
         print("error: " + str(err))
     finally:
@@ -45,12 +51,15 @@ def client_thread(server_addr: tuple, finished: Event, in_list: list, text: tkin
 # --------------------------- NETWORK FUNCS ---------------------------
 
 
-def protocol_encode(line):
+def protocol_encode(line, name=False):
     """
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
+    :param name: whether the message represents the name or a message
     :return:
     """
+    if name:
+        return ('%in' + str(len(line)).zfill(3) + line).encode()
     return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
@@ -63,6 +72,8 @@ def protocol_read(socket):
     len = socket.recv(3).decode()  # get length
     if len == "" or len == b'':  # check for error
         return len
+    elif len == '%in':
+        return 'n'
     return socket.recv(int(len)).decode()  # read the message
 
 

@@ -53,7 +53,10 @@ def main_loop():
                 # check for new connection
                 if current_socket is server_socket:
                     client_socket, client_address = current_socket.accept()
-                    client_addrs.update({client_socket: client_address[0]})
+                    name_msg = protocol_read(client_socket)
+                    assert name_msg == 'n'
+                    name = protocol_read(client_socket)
+                    client_addrs.update({client_socket: name})
                     open_client_sockets.append(client_socket)
                     print("new client added")
                     break
@@ -80,12 +83,15 @@ def main_loop():
 # --------------------------- NETWORK FUNCS ---------------------------
 
 
-def protocol_encode(line):
+def protocol_encode(line, name=False):
     """
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
+    :param name: whether the message represents the name or a message
     :return:
     """
+    if name:
+        return ('%in' + str(len(line)).zfill(3) + line).encode()
     return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
@@ -98,6 +104,8 @@ def protocol_read(socket):
     len = socket.recv(3).decode()  # get length
     if len == "" or len == b'':  # check for error
         return len
+    elif len == '%in':
+        return 'n'
     return socket.recv(int(len)).decode()  # read the message
 
 
