@@ -24,14 +24,14 @@ class ChatClient:
     """
     A chat client class for the chat function of the CameRAND app
     """
-    def __init__(self, ip, port, name):
+    def __init__(self, screen, ip, port, name):
         """
         Init method for the chat client
         """
         self.finished = Event()
         self.in_buf = []
         name_f = [name]
-        self.window = tk.Tk()
+        self.window = tk.Toplevel(screen)
         self.window.minsize(1200, 675)
         self.window.maxsize(1200, 675)
         self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))
@@ -44,8 +44,9 @@ class ChatClient:
 
         info = f"My name: \n%s\n\n\nServer-\n\nip: \n%s\n\nport: \n%s" % (name, ip, port)
 
-        self.data = ttk.Label(self.window, text=info)
-        self.send_but = ttk.Button(self.window, text="Send", command=lambda: self.send())
+        self.data = ttk.Label(self.window, text=info, font=("Verdana", 15))
+        self.send_img = tk.PhotoImage(file="send.png")
+        self.send_but = ttk.Button(self.window, command=lambda: self.send(), image=self.send_img)
 
         self.chat.place(x=200, y=20, width=950, height=600)
         self.ent.place(x=200, y=625, width=900, height=40)
@@ -366,6 +367,8 @@ class Chat(tk.Frame):
         init for the chat main page
         """
         tk.Frame.__init__(self, parent)
+        self.screen = controller
+        self.chats = []
 
         label1 = ttk.Label(self, text="Chat", font=("Verdana", 40))
         label1.place(x=1050, y=0)
@@ -376,25 +379,30 @@ class Chat(tk.Frame):
 
         self.ip = tk.StringVar()
         self.port = tk.StringVar()
+        self.name = tk.StringVar()
 
         label2 = ttk.Label(self, text="Server host name: (IPv4):", font=("Verdana", 15))
         label3 = ttk.Label(self, text="port:", font=("Verdana", 15))
+        label4 = ttk.Label(self, text="Display Name:", font=("Verdana", 15))
 
-        label2.place(x=400, y=200, width=300, height=40)
-        label3.place(x=725, y=200, width=60, height=40)
+        label2.place(x=400, y=200, width=275, height=40)
+        label3.place(x=700, y=200, width=100, height=40)
+        label4.place(x=500, y=325, height=50, width=200)
 
         ip_ent = ttk.Entry(self, textvariable=self.ip, style='TButton', font=("Verdana", 15))
         port_ent = ttk.Entry(self, textvariable=self.port, style='TButton', font=("Verdana", 15))
+        name_ent = ttk.Entry(self, textvariable=self.name, style='TButton', font=("Verdana", 15))
 
-        ip_ent.place(x=400, y=265, width=300, height=50)
-        port_ent.place(x=725, y=265, width=60, height=50)
+        ip_ent.place(x=400, y=265, width=275, height=50)
+        port_ent.place(x=700, y=265, width=100, height=50)
+        name_ent.place(x=500, y=400, height=50, width=200)
 
         button2 = ttk.Button(self, text="Connect",
-                             command=lambda: self.connect(controller))
+                             command=lambda: self.connect())
         button2.place(x=500, y=500, height=100, width=200)
 
-    def connect(self, root):
-        pass
+    def connect(self):
+        self.chats.append(ChatClient(self.screen, self.ip.get(), self.port.get(), self.name.get()))
 
 # make other chat window
 

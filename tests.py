@@ -34,6 +34,9 @@ print(int_to_str(message))
 """
 
 
-from GUI import ChatClient
+import cv2
 
-a = ChatClient("127.0.0.1", "20003", 'Eitan')
+
+photo = cv2.imread("send.png")
+photo.resize((50, 50))
+cv2.imwrite("send.png", photo)
