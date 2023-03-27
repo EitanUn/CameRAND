@@ -3,11 +3,10 @@ Author: Eitan Unger
 Date: 27/5/22
 description: Server for Cow006, manages game, runs infinitely
 """
-import functools
-import operator
+
 import socket
 import select
-import random
+from Crypto.PublicKey import RSA
 
 # --------------------------- CONSTANTS ---------------------------
 SERVER_IP = '0.0.0.0'
@@ -37,6 +36,7 @@ def main_loop():
     """
     open_client_sockets = []
     client_addrs = {}
+    client_keys = {}
     server_socket = socket.socket()
     # log-in phase:
     try:
@@ -63,6 +63,13 @@ def main_loop():
                 else:
                     # receive data
                     data = protocol_read(current_socket)
+                    if data == 1:
+                        private = RSA.importKey('server_keys/id_rsa')
+                        current_socket.send(protocol_encode(str(private.e)))
+                        current_socket.send(protocol_encode(str(private.n)))
+                        en_key = protocol_read(current_socket)
+                        key = pow(en_key, private.d, private.n)
+                        client_keys.update({current_socket: key})
                     print("Received: " + data)
                     # check if connection was aborted
                     if data == "" or data == "a" or data == b'':
@@ -83,16 +90,14 @@ def main_loop():
 # --------------------------- NETWORK FUNCS ---------------------------
 
 
-def protocol_encode(line, name=False):
+def protocol_encode(line, pre=""):
     """
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
-    :param name: whether the message represents the name or a message
+    :param pre: prefix to add to the message for special messages like key and name
     :return:
     """
-    if name:
-        return ('%in' + str(len(line)).zfill(3) + line).encode()
-    return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
+    return (pre + str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
 def protocol_read(socket):
@@ -106,7 +111,19 @@ def protocol_read(socket):
         return len
     elif len == '%in':
         return 'n'
-    return socket.recv(int(len)).decode()  # read the message
+    elif len == '%pk':
+        assert socket.recv(6).decode() == "003key"
+        return 1
+    len = int(len)
+    if len < 1024:
+        return socket.recv(len).decode()  # read the message
+    else:
+        ret = ""
+        while len > 1024:
+            ret += socket.recv(1024).decode()
+            len -= 1024
+        ret += socket.recv(len).decode()
+        return ret
 
 
 def send_available(open_client_sockets):

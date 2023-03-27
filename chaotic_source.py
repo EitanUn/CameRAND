@@ -70,12 +70,12 @@ class Random:
         # get the lsb of each value (most random) as a string in the correct length
         return "".join([str(x % 2) for x in numlist[:rang]])
 
-    def get_rand_large(self):
+    def get_rand_large(self, size):
         """
         get a large random integer, used for RSA keygen
         :return: large (128 byte) integer
         """
-        return int("0b" + self.get_random_bits(1024), 2)
+        return int("0b" + self.get_random_bits(size), 2)
 
     def get_rand_range(self, start: int, stop: int):
         """

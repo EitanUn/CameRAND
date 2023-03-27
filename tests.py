@@ -1,4 +1,4 @@
-"""from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA
 
 
 def str_to_int(my_string):
@@ -31,12 +31,3 @@ print(encrypted)
 message = pow(encrypted, private.d, private.n)
 print(message)
 print(int_to_str(message))
-"""
-
-
-import cv2
-
-
-photo = cv2.imread("send.png")
-photo.resize((50, 50))
-cv2.imwrite("send.png", photo)

@@ -94,7 +94,7 @@ def get_prime(rand):
     A function to get a prime number based on a randomly generated number
     :param rand: the random number generator object
     """
-    b = rand.get_rand_large() | 1  # generate random int and make sure it is odd (only even prime is 2, not needed)
+    b = rand.get_rand_large(1024) | 1  # generate random int and make sure it is odd (only even prime is 2, not needed)
     while not is_prime(b, rand):
         b += 2  # if not prime, go to the next odd number until prime is found
     return b

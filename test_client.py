@@ -6,7 +6,8 @@ description: Client for Cow006, manages graphics, runs for the length of one gam
 import socket
 import tkinter.scrolledtext
 from threading import Event
-from tkinter import ttk
+from chaotic_source import Random
+from Crypto.Cipher import AES
 import select
 
 
@@ -18,7 +19,15 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
     server_socket = socket.socket()
     try:
         server_socket.connect(server_addr)
-        server_socket.send(protocol_encode(name[0], True))
+        server_socket.send(protocol_encode(name[0], "%in"))  # send name to the server
+        server_socket.send(protocol_encode("key", "%pk"))  # request public key from server
+        exponent = protocol_read(server_socket)
+        num = protocol_read(server_socket)
+        rand = Random()
+        key = rand.get_rand_large(256)
+        rand.pause()
+        server_socket.send(protocol_encode(pow(key, exponent, num)))
+        cipher = AES.new(key, AES.MODE_EAX)
         out_list = []
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
@@ -51,16 +60,14 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
 # --------------------------- NETWORK FUNCS ---------------------------
 
 
-def protocol_encode(line, name=False):
+def protocol_encode(line, pre=""):
     """
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
-    :param name: whether the message represents the name or a message
+    :param pre: prefix to add to the message for special messages like key and name
     :return:
     """
-    if name:
-        return ('%in' + str(len(line)).zfill(3) + line).encode()
-    return (str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
+    return (pre + str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
 def protocol_read(socket):
@@ -74,7 +81,12 @@ def protocol_read(socket):
         return len
     elif len == '%in':
         return 'n'
-    return socket.recv(int(len)).decode()  # read the message
+    elif len == '%pk':
+        assert socket.recv(6).decode() == "003key"
+        return 'pk'
+    len = int(len)
+    return socket.recv(len).decode()  # read the message
+
 
 
 if __name__ == '__main__':
