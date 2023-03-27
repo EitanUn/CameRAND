@@ -21,13 +21,14 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
         server_socket.connect(server_addr)
         server_socket.send(protocol_encode(name[0], "%in"))  # send name to the server
         server_socket.send(protocol_encode("key", "%pk"))  # request public key from server
-        exponent = protocol_read(server_socket)
-        num = protocol_read(server_socket)
+        exponent = int(protocol_read(server_socket))
+        num = int(protocol_read(server_socket))
         rand = Random()
-        key = rand.get_rand_large(256)
+        key = rand.get_rand_large(64)
         rand.pause()
-        server_socket.send(protocol_encode(pow(key, exponent, num)))
-        cipher = AES.new(key, AES.MODE_EAX)
+        server_socket.send(protocol_encode(str(pow(key, exponent, num))))
+        cipher = AES.new(int_to_bytes(key), AES.MODE_EAX)
+        server_socket.send(protocol_encode(cipher.nonce, 'bin'))
         out_list = []
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
@@ -39,16 +40,17 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
                     text.insert(tkinter.END, "---------------------------Server Closed------------------")
                     text.config(state="disabled")
                     break
+                msg = cipher.decrypt(data)
                 text.configure(state="normal")
-                text.insert(tkinter.END, data + "\n")
+                text.insert(tkinter.END, str(msg) + "\n")
                 text.config(state="disabled")
 
             if wlist:
                 for i in in_list:
-                    server_socket.send(protocol_encode(i))
+                    enc_msg = cipher.encrypt(i.encode())
+                    server_socket.send(protocol_encode(enc_msg))
                     in_list.remove(i)
                 out_list = []
-
             if in_list:
                 out_list.append(server_socket)
 
@@ -67,6 +69,8 @@ def protocol_encode(line, pre=""):
     :param pre: prefix to add to the message for special messages like key and name
     :return:
     """
+    if pre == 'bin':
+        (pre + str(len(line)).zfill(3)).encode() + line
     return (pre + str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
@@ -84,9 +88,19 @@ def protocol_read(socket):
     elif len == '%pk':
         assert socket.recv(6).decode() == "003key"
         return 'pk'
+    elif len == 'bin':
+        len = socket.recv(3).decode()
+        return socket.recv(len)
     len = int(len)
     return socket.recv(len).decode()  # read the message
 
+
+def int_to_bytes(num):
+    byte_list = []
+    while num:
+        byte_list.append(num % 16)
+        num //= 16
+    return bytes(byte_list)
 
 
 if __name__ == '__main__':

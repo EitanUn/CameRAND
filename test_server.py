@@ -7,6 +7,7 @@ description: Server for Cow006, manages game, runs infinitely
 import socket
 import select
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
 
 # --------------------------- CONSTANTS ---------------------------
 SERVER_IP = '0.0.0.0'
@@ -38,6 +39,8 @@ def main_loop():
     client_addrs = {}
     client_keys = {}
     server_socket = socket.socket()
+    with open("server_keys/id_rsa", 'r') as file:
+        private = RSA.importKey(file.read())
     # log-in phase:
     try:
         server_socket.bind((SERVER_IP, SERVER_PORT))
@@ -64,23 +67,26 @@ def main_loop():
                     # receive data
                     data = protocol_read(current_socket)
                     if data == 1:
-                        private = RSA.importKey('server_keys/id_rsa')
                         current_socket.send(protocol_encode(str(private.e)))
                         current_socket.send(protocol_encode(str(private.n)))
-                        en_key = protocol_read(current_socket)
+                        en_key = int(protocol_read(current_socket))
                         key = pow(en_key, private.d, private.n)
-                        client_keys.update({current_socket: key})
+                        nonce = protocol_read(current_socket)
+                        cipher = AES.new(int_to_bytes(key), AES.MODE_EAX, nonce)
+                        client_keys.update({current_socket: cipher})
                     print("Received: " + data)
                     # check if connection was aborted
-                    if data == "" or data == "a" or data == b'':
+                    if data == "" or data == b'':
                         # socket was closed
                         open_client_sockets.remove(current_socket)
                         current_socket.close()
                     else:
-                        data = client_addrs[current_socket] + ": " + data
+                        msg = str(client_keys[current_socket].decrypt(data))
+                        data = client_addrs[current_socket] + ": " + msg
                         send_available(open_client_sockets)
                         for i in open_client_sockets:
-                            i.send(protocol_encode(data))
+                            enc_msg = client_keys[i].encrypt(data.encode())
+                            i.send(protocol_encode(enc_msg))
     except socket.error as err:
         abort(open_client_sockets)
         print("error: " + str(err))
@@ -143,6 +149,14 @@ def send_available(open_client_sockets):
 def abort(sockets):
     for i in sockets:
         i.close()
+
+
+def int_to_bytes(num):
+    byte_list = []
+    while num:
+        byte_list.append(num % 8)
+        num //= 8
+    return bytes(byte_list)
 
 
 if __name__ == '__main__':
