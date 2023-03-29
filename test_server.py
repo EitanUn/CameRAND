@@ -74,13 +74,13 @@ def main_loop():
                         nonce = protocol_read(current_socket)
                         cipher = AES.new(int_to_bytes(key), AES.MODE_EAX, nonce)
                         client_keys.update({current_socket: cipher})
-                    print("Received: " + data)
                     # check if connection was aborted
-                    if data == "" or data == b'':
+                    elif data == "" or data == b'':
                         # socket was closed
                         open_client_sockets.remove(current_socket)
                         current_socket.close()
                     else:
+                        assert current_socket in client_keys.keys()
                         msg = str(client_keys[current_socket].decrypt(data))
                         data = client_addrs[current_socket] + ": " + msg
                         send_available(open_client_sockets)
@@ -103,6 +103,8 @@ def protocol_encode(line, pre=""):
     :param pre: prefix to add to the message for special messages like key and name
     :return:
     """
+    if pre == 'bin':
+        return (pre + str(len(line)).zfill(3)).encode() + line
     return (pre + str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
 
 
@@ -120,16 +122,19 @@ def protocol_read(socket):
     elif len == '%pk':
         assert socket.recv(6).decode() == "003key"
         return 1
+    elif len == 'bin':
+        len = socket.recv(3).decode()
+        return socket.recv(int(len))
     len = int(len)
-    if len < 1024:
-        return socket.recv(len).decode()  # read the message
-    else:
-        ret = ""
-        while len > 1024:
-            ret += socket.recv(1024).decode()
-            len -= 1024
-        ret += socket.recv(len).decode()
-        return ret
+    return socket.recv(len).decode()  # read the message
+
+
+def int_to_bytes(num):
+    byte_list = []
+    while num:
+        byte_list.append(num % 256)
+        num //= 256
+    return bytes(byte_list)
 
 
 def send_available(open_client_sockets):
@@ -149,14 +154,6 @@ def send_available(open_client_sockets):
 def abort(sockets):
     for i in sockets:
         i.close()
-
-
-def int_to_bytes(num):
-    byte_list = []
-    while num:
-        byte_list.append(num % 8)
-        num //= 8
-    return bytes(byte_list)
 
 
 if __name__ == '__main__':
