@@ -7,7 +7,7 @@ description: Server for Cow006, manages game, runs infinitely
 import socket
 import select
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES
+from AES_new import AesNew
 
 # --------------------------- CONSTANTS ---------------------------
 SERVER_IP = '0.0.0.0'
@@ -72,7 +72,7 @@ def main_loop():
                         en_key = int(protocol_read(current_socket))
                         key = pow(en_key, private.d, private.n)
                         nonce = protocol_read(current_socket)
-                        cipher = AES.new(int_to_bytes(key), AES.MODE_EAX, nonce)
+                        cipher = AesNew(int_to_bytes(key), nonce)
                         client_keys.update({current_socket: cipher})
                     # check if connection was aborted
                     elif data == "" or data == b'':
@@ -81,12 +81,12 @@ def main_loop():
                         current_socket.close()
                     else:
                         assert current_socket in client_keys.keys()
-                        msg = str(client_keys[current_socket].decrypt(data))
+                        msg = client_keys[current_socket].decrypt(data).decode()
                         data = client_addrs[current_socket] + ": " + msg
                         send_available(open_client_sockets)
                         for i in open_client_sockets:
                             enc_msg = client_keys[i].encrypt(data.encode())
-                            i.send(protocol_encode(enc_msg))
+                            i.send(protocol_encode(enc_msg, "bin"))
     except socket.error as err:
         abort(open_client_sockets)
         print("error: " + str(err))

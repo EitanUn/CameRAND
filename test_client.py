@@ -8,6 +8,7 @@ import tkinter.scrolledtext
 from threading import Event
 from chaotic_source import Random
 from Crypto.Cipher import AES
+from AES_new import AesNew
 import select
 
 
@@ -27,8 +28,9 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
         key = rand.get_rand_large(128)
         rand.pause()
         server_socket.send(protocol_encode(str(pow(key, exponent, num))))
-        cipher = AES.new(int_to_bytes(key), AES.MODE_EAX)
-        server_socket.send(protocol_encode(cipher.nonce, pre='bin'))
+        temp_cipher = AES.new(int_to_bytes(key), AES.MODE_EAX)
+        server_socket.send(protocol_encode(temp_cipher.nonce, pre='bin'))
+        cipher = AesNew(int_to_bytes(key), temp_cipher.nonce)
         out_list = []
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
@@ -42,7 +44,7 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
                     break
                 msg = cipher.decrypt(data)
                 text.configure(state="normal")
-                text.insert(tkinter.END, str(msg) + "\n")
+                text.insert(tkinter.END, msg.decode() + "\n")
                 text.config(state="disabled")
 
             if wlist:
@@ -69,8 +71,6 @@ def protocol_encode(line, pre=""):
     :param pre: prefix to add to the message for special messages like key and name
     :return:
     """
-    print(line)
-    print(pre)
     if pre == 'bin':
         return (pre + str(len(line)).zfill(3)).encode() + line
     return (pre + str(len(line)).zfill(3) + line).encode()  # add a 3-digit length prefix for protocol_read()
@@ -92,7 +92,7 @@ def protocol_read(socket):
         return 'pk'
     elif len == 'bin':
         len = socket.recv(3).decode()
-        return socket.recv(len)
+        return socket.recv(int(len))
     len = int(len)
     return socket.recv(len).decode()  # read the message
 
