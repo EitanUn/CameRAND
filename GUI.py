@@ -4,16 +4,15 @@ Date: 29/02/23
 description: A file to build the client GUI
 """
 import logging
-import socket
 import os
 import pickle
 import time
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, messagebox
 from threading import Thread, Event
 from files import idle_prime, keygen, save_image
 from tkinter.filedialog import askdirectory
-from chaotic_source import Random
+from chaotic_source import Random, test_camera
 from test_client import client_thread
 
 LARGEFONT = ("Verdana", 80)
@@ -31,32 +30,35 @@ class ChatClient:
         self.finished = Event()
         self.in_buf = []
         name_f = [name]
-        self.window = tk.Toplevel(screen)
+        self.window = tk.Toplevel(screen)  # create new screen for the chat
         self.window.minsize(1200, 675)
         self.window.maxsize(1200, 675)
-        self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))
-        self.chat.configure(state="disabled")
+        self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))  # chat itself
+        self.chat.configure(state="disabled")  # make the chat read only
+        # create client (message I/O) thread to handle communications
         self.network_thread = Thread(target=client_thread,
                                      args=((ip, int(port)), name_f, self.finished, self.in_buf, self.chat))
         self.textvar = tk.StringVar()
+        # create an entry for writing messages
         self.ent = ttk.Entry(self.window, textvariable=self.textvar, font=("Verdana", 10),
                              validate='key', validatecommand=self.validatecommand)
 
+        # write user data on side for easier use
         info = f"My name: \n%s\n\n\nServer-\n\nip: \n%s\n\nport: \n%s" % (name, ip, port)
 
         self.data = ttk.Label(self.window, text=info, font=("Verdana", 15))
         self.send_img = tk.PhotoImage(file="send.png")
-        self.send_but = ttk.Button(self.window, command=lambda: self.send(), image=self.send_img)
+        self.send_but = ttk.Button(self.window, command=lambda: self.send(), image=self.send_img)  # send button
 
         self.chat.place(x=200, y=20, width=950, height=600)
         self.ent.place(x=200, y=625, width=900, height=40)
         self.data.place(x=25, y=100, width=150, height=400)
         self.send_but.place(x=1100, y=625, width=50, height=40)
 
-        self.network_thread.start()
+        self.network_thread.start()  # start thread
         self.window.mainloop()
         self.finished.set()
-        self.network_thread.join()
+        self.network_thread.join()  # close and join thread on window close
 
     def send(self):
         """
@@ -426,6 +428,9 @@ def main():
     if not os.path.exists("primes.bin"):
         with open("primes.bin", "wb") as file:
             pickle.dump([], file)
+    if not test_camera():
+        messagebox.showerror("Camera not found", "The computer's camera is not available")
+        return
     app = Gui()
     app.minsize(1200, 675)
     app.maxsize(1200, 675)

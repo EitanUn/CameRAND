@@ -1,7 +1,8 @@
 """
 Author: Eitan Unger
-Date: 27/5/22
-description: Server for Cow006, manages game, runs infinitely
+Date: 18/04/23
+description: Server for CameRAND secure chat, for now requires a directory named server_keys in the
+current working directory
 """
 
 import socket
@@ -22,18 +23,8 @@ socket.setdefaulttimeout(TIMEOUT)
 
 def main():
     """
-    every time a game is finished or aborted, set up a new game
-    :return: none
-    """
-    while True:
-        main_loop()
-
-
-def main_loop():
-    """
-    the main server loop, split into log in phase and game phase, with setup in between
-    restarts when an error is encountered or a game is finished
-    :return: None
+    main loop, checks for new connections, errors, disconnects and messages (in this order), also makes secure
+    connections using an SSH key pair and an AES encryption. appends clients names to messages.
     """
     open_client_sockets = []
     client_addrs = {}
@@ -66,7 +57,15 @@ def main_loop():
                 else:
                     # receive data
                     data = protocol_read(current_socket)
-                    if data == 1:
+                    if data == 0:
+                        open_client_sockets.remove(current_socket)
+                        if current_socket in client_addrs.keys():
+                            print("client %s disconnected" % client_addrs[current_socket])
+                            client_addrs.pop(current_socket)
+                        if current_socket in client_keys.keys():
+                            client_keys.pop(current_socket)
+                        current_socket.close()
+                    elif data == 1:
                         current_socket.send(protocol_encode(str(private.e)))
                         current_socket.send(protocol_encode(str(private.n)))
                         en_key = int(protocol_read(current_socket))
@@ -101,7 +100,7 @@ def protocol_encode(line, pre=""):
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
     :param pre: prefix to add to the message for special messages like key and name
-    :return:
+    :return: protocol encoded message
     """
     if pre == 'bin':
         return (pre + str(len(line)).zfill(3)).encode() + line
@@ -117,19 +116,26 @@ def protocol_read(socket):
     len = socket.recv(3).decode()  # get length
     if len == "" or len == b'':  # check for error
         return len
-    elif len == '%in':
+    elif len == '%in':  # name message prefix
         return 'n'
-    elif len == '%pk':
+    elif len == '%pk':  # private key message prefix
         assert socket.recv(6).decode() == "003key"
         return 1
-    elif len == 'bin':
+    elif len == 'bin':  # binary data message prefix (do not decode data)
         len = socket.recv(3).decode()
         return socket.recv(int(len))
+    elif len == 'end':  # client disconnect message prefix
+        return 0
     len = int(len)
     return socket.recv(len).decode()  # read the message
 
 
 def int_to_bytes(num):
+    """
+    func to turn an integer into bytes object
+    :param num: integer variable
+    :return: bytes form of num
+    """
     byte_list = []
     while num:
         byte_list.append(num % 256)
@@ -138,12 +144,16 @@ def int_to_bytes(num):
 
 
 def send_available(open_client_sockets):
+    """
+    function to check if all sockets are open to send a message to
+    :param open_client_sockets: a list of sockets to check
+    """
     rlist, wlist, xlist = select.select(open_client_sockets,
                                         open_client_sockets, open_client_sockets, 0.01)
     for err in xlist:
         open_client_sockets.remove(err)
         err.close()
-    while len(wlist) != len(open_client_sockets):
+    while len(wlist) != len(open_client_sockets):  # check if all sockets are available (wlist)
         rlist, wlist, xlist = select.select(open_client_sockets,
                                             open_client_sockets, open_client_sockets, 0.01)
         for err in xlist:
@@ -152,6 +162,10 @@ def send_available(open_client_sockets):
 
 
 def abort(sockets):
+    """
+    function to close all sockets
+    :param sockets: list of sockets to close
+    """
     for i in sockets:
         i.close()
 

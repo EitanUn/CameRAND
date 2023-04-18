@@ -117,20 +117,30 @@ class Random:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.resize(frame, (64, 96))
         numlist = []
-        bytes = []
+        bytes_list = []
         for i in frame.tolist():
             numlist.extend(i)
         bits = "".join([str(x % 2) for x in numlist])
         # get 6144 bits (8*16*16*3) bits and split them into bytes, one for each color channel of each pixel, then
         # put them into an array and reshape it to 16x16x3
         while bits:
-            bytes.append(int("0b" + bits[:8], 2))
+            bytes_list.append(int("0b" + bits[:8], 2))
             bits = bits[8:]
-        photo = np.array(bytes).reshape((16, 16, 3))
+        photo = np.array(bytes_list).reshape((16, 16, 3))
         mul = np.ones((16, 16, 1))
         # resize the image from 16x16 to 256x256 without smoothing pixels using a kronecker product
         frame = np.kron(photo, mul)
         cv2.imwrite(name, frame)
+
+
+def test_camera():
+    """
+    Function used to test if the camera is available
+    """
+    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # open camera
+    res = not (cam is None or not cam.isOpened())  # check if object is an open camera or not
+    cam.release()  # release camera in case it is valid to not hold it
+    return res
 
 
 if __name__ == '__main__':

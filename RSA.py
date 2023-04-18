@@ -1,12 +1,20 @@
 """
 Author: Eitan Unger
-Date: 29/02/23
-description: A file for
+Date: 18/04/23
+description: A file for math- and RSA-related functions such as primality tests and key pair generation based on
+2 primes, and all the other required functions
 """
 from chaotic_source import Random
 
 
 def rabin_miller(num, accuracy, rand: Random):
+    """
+    rabin-miller primality test
+    :param num: number to test
+    :param accuracy: number of trials (iterations)
+    :param rand: RNG object
+    :return: likely prime/not prime
+    """
     # Returns True if num is a prime number.
 
     s = num - 1
@@ -32,6 +40,13 @@ def rabin_miller(num, accuracy, rand: Random):
 
 
 def is_prime(num, rand: Random, accuracy=10):
+    """
+    basic small prime check, else calls the rabin-miller test
+    :param num: number to test
+    :param rand: RNG object for rabin-miller call
+    :param accuracy: number of trials (iterations) for the rabin-miller call
+    :return: likely prime/not prime
+    """
     # Return True if num is a prime number. This function does a quicker
     # prime number check before calling rabinMiller().
 
@@ -65,6 +80,12 @@ def is_prime(num, rand: Random, accuracy=10):
 
 
 def gcd(a, b):
+    """
+    greatest common divisor function using Euclidean algorithm
+    :param a: number 1
+    :param b: number 2
+    :return: greatest common divisor
+    """
     while a > 0 and b > 0:
         if a > b:
             a = a % b
@@ -74,44 +95,13 @@ def gcd(a, b):
 
 
 def lcm(a, b):
+    """
+    least common multiple function
+    :param a: number 1
+    :param b: number 2
+    :return: least common multiple
+    """
     return abs(a*b)//gcd(a, b)
-
-
-def extended_euclidean_algorithm(a, b):
-    """
-    extended_euclidean_algorithm(a, b)
-
-    The result is the largest common divisor for a and b.
-
-    :param a: integer number
-    :param b: integer number
-    :return:  the largest common divisor for a and b
-    """
-
-    if a == 0:
-        return b, 0, 1
-    else:
-        g, y, x = extended_euclidean_algorithm(b % a, a)
-        return g, x - (b // a) * y, y
-
-
-def modular_inverse(e, t):
-    """
-    modular_inverse(e, t)
-
-    Counts modular multiplicative inverse for e and t.
-
-    :param e: in this case e is a public key exponent
-    :param t: and t is an Euler function
-    :return:  the result of modular multiplicative inverse for e and t
-    """
-
-    g, x, y = extended_euclidean_algorithm(e, t)
-
-    if g != 1:
-        raise Exception('Modular inverse does not exist')
-    else:
-        return x % t
 
 
 def rsa(p, q):

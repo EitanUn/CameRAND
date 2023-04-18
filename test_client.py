@@ -1,7 +1,8 @@
 """
 Author: Eitan Unger
-Date: 27/5/22
-description: Client for Cow006, manages graphics, runs for the length of one game then shuts down
+Date: 18/04/23
+description: Client for CameRAND secure chat communication, can send and receive messages in the background of the chat
+GUI on a thread
 """
 import socket
 import tkinter.scrolledtext
@@ -55,7 +56,7 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
                 out_list = []
             if in_list:
                 out_list.append(server_socket)
-
+        server_socket.send(protocol_encode("", "end"))
     except socket.error as err:
         print("error: " + str(err))
     finally:
@@ -69,7 +70,7 @@ def protocol_encode(line, pre=""):
     Encodes message according to the protocol (length prefix and type prefix)
     :param line: line to encode
     :param pre: prefix to add to the message for special messages like key and name
-    :return:
+    :return: protocol encoded message
     """
     if pre == 'bin':
         return (pre + str(len(line)).zfill(3)).encode() + line
@@ -85,19 +86,26 @@ def protocol_read(socket):
     len = socket.recv(3).decode()  # get length
     if len == "" or len == b'':  # check for error
         return len
-    elif len == '%in':
+    elif len == '%in':  # name message prefix
         return 'n'
-    elif len == '%pk':
+    elif len == '%pk':  # private key message prefix
         assert socket.recv(6).decode() == "003key"
-        return 'pk'
-    elif len == 'bin':
+        return 1
+    elif len == 'bin':  # binary data message prefix (do not decode data)
         len = socket.recv(3).decode()
         return socket.recv(int(len))
+    elif len == 'end':  # client disconnect message prefix
+        return 0
     len = int(len)
     return socket.recv(len).decode()  # read the message
 
 
 def int_to_bytes(num):
+    """
+    func to turn an integer into bytes object
+    :param num: integer variable
+    :return: bytes form of num
+    """
     byte_list = []
     while num:
         byte_list.append(num % 256)
