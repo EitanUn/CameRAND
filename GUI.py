@@ -31,6 +31,7 @@ class ChatClient:
         self.in_buf = []
         name_f = [name]
         self.window = tk.Toplevel(screen)  # create new screen for the chat
+        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
         self.window.minsize(1200, 675)
         self.window.maxsize(1200, 675)
         self.chat = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, font=("Times New Roman", 15))  # chat itself
@@ -57,8 +58,6 @@ class ChatClient:
 
         self.network_thread.start()  # start thread
         self.window.mainloop()
-        self.finished.set()
-        self.network_thread.join()  # close and join thread on window close
 
     def send(self):
         """
@@ -74,6 +73,11 @@ class ChatClient:
         validate function for the input
         """
         return len(self.textvar.get()) < 500
+
+    def on_close(self):
+        self.finished.set()
+        self.network_thread.join()  # close and join thread on window close
+        self.window.destroy()
 
 
 class Gui(tk.Tk):

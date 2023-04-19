@@ -63,11 +63,12 @@ def main():
                             name = client_addrs[current_socket]
                             print("client %s disconnected" % name)
                             client_addrs.pop(current_socket)
-                            data = name + " has left the chat."
-                            send_available(open_client_sockets)
-                            for i in open_client_sockets:
-                                enc_msg = client_keys[i].encrypt(data.encode())
-                                i.send(protocol_encode(enc_msg, "bin"))
+                            if open_client_sockets:
+                                data = name + " has left the chat."
+                                send_available(open_client_sockets)
+                                for i in open_client_sockets:
+                                    enc_msg = client_keys[i].encrypt(data.encode())
+                                    i.send(protocol_encode(enc_msg, "bin"))
                         if current_socket in client_keys.keys():
                             client_keys.pop(current_socket)
                         current_socket.close()
