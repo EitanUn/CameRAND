@@ -15,8 +15,12 @@ import select
 
 def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, text: tkinter.scrolledtext.ScrolledText):
     """
-    The main function- handles the game running
-    :return: none
+    The main function- handles the communication for the ChatClient class
+    :param server_addr: the server address (ip, port)
+    :param name: display name for client in the chat
+    :param finished: event shared between client and thread to mark the end of communication
+    :param in_list: the list of messages to send to the server
+    :param text: the text field of the GUI
     """
     server_socket = socket.socket()
     try:

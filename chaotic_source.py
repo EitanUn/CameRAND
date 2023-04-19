@@ -11,9 +11,6 @@ import cv2
 import numpy as np
 
 
-PCT_MAX = 4294967295
-
-
 class Random:
     """
     a class similar to python's Random except using camera interference as a true chaotic source
@@ -136,6 +133,7 @@ class Random:
 def test_camera():
     """
     Function used to test if the camera is available
+    :return: camera available t/f
     """
     cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # open camera
     res = not (cam is None or not cam.isOpened())  # check if object is an open camera or not

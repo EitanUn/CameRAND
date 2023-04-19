@@ -105,6 +105,12 @@ def lcm(a, b):
 
 
 def rsa(p, q):
+    """
+    a function to calculate all the required numbers for an RSA key
+    :param p: prime 1
+    :param q: prime 2
+    :return: the three remaining numbers: modulus, public power and private power
+    """
     n = p * q
     lam_n = lcm(p-1, q-1)
     e = 65537

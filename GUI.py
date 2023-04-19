@@ -285,15 +285,20 @@ class Rand(tk.Frame):
         sep = ttk.Separator(self, orient="vertical")
         sep.place(x=596, y=0, height=675, width=8)
 
-        self.startval = tk.StringVar()
-        self.startval.set("Start:")
-        self.endval = tk.StringVar()
-        self.endval.set("End:")
+        start_l = ttk.Label(self, text="Start:")
+        end_l = ttk.Label(self, text="End:")
+        start_l.place(x=50, y=170, height=50, width=80)
+        end_l.place(x=50, y=230, height=50, width=80)
 
-        start = ttk.Entry(self, textvariable=self.startval, style='TButton')
+        self.startval = tk.StringVar()
+        self.endval = tk.StringVar()
+
+        start = ttk.Entry(self, textvariable=self.startval, style='TButton',
+                          validate='key', validatecommand=self.validate_start)
         start.place(x=130, y=170, height=50, width=400)
 
-        end = ttk.Entry(self, textvariable=self.endval, style='TButton')
+        end = ttk.Entry(self, textvariable=self.endval, style='TButton',
+                        validate='key', validatecommand=self.validate_end)
         end.place(x=130, y=230, height=50, width=400)
 
         button2 = ttk.Button(self, text="Generate integer",
@@ -317,6 +322,9 @@ class Rand(tk.Frame):
         button4.place(x=825, y=500, width=150, height=60)
 
     def exit(self, controller):
+        """
+        A function that deletes the temporary image and exits the window
+        """
         if os.path.exists('temp.png'):
             os.remove('temp.png')
         controller.show_frame(StartPage)
@@ -326,9 +334,9 @@ class Rand(tk.Frame):
         A function to get 2 random numbers from the entries and generate an integer in between them
         """
         self.random.cont()
-        start = self.startval.get().split(":")[1]
-        end = self.endval.get().split(":")[1]
-        if not (start.isnumeric() and end.isnumeric() and int(start) < int(end)):
+        start = self.startval.get()
+        end = self.endval.get()
+        if int(start) >= int(end):
             val = "Invalid start/end"
         else:
             val = self.random.get_int_range(int(start), int(end) - 1)
@@ -358,6 +366,18 @@ class Rand(tk.Frame):
         self.img = tk.PhotoImage(file="temp.png")
         self.image.configure(image=self.img)
         self.random.pause()
+
+    def validate_start(self):
+        """
+        validate function for the start number input
+        """
+        return self.startval.get() == "" or self.startval.get().isnumeric()
+
+    def validate_end(self):
+        """
+        validate function for the end number input
+        """
+        return self.endval.get() == "" or self.endval.get().isnumeric()
 
 
 class Chat(tk.Frame):
@@ -442,5 +462,6 @@ def main():
 if __name__ == '__main__':
     if os.path.exists('temp.png'):
         os.remove('temp.png')
+    print("".isnumeric())
     logging.basicConfig(filename="rsagen.log", level=logging.DEBUG)
     main()
