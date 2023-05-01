@@ -47,10 +47,6 @@ def main():
                 # check for new connection
                 if current_socket is server_socket:
                     client_socket, client_address = current_socket.accept()
-                    name_msg = protocol_read(client_socket)
-                    assert name_msg == 'n'
-                    name = protocol_read(client_socket)
-                    client_addrs.update({client_socket: name})
                     open_client_sockets.append(client_socket)
                     print("new client added")
                     break
@@ -81,6 +77,9 @@ def main():
                         nonce = protocol_read(current_socket)
                         cipher = AesNew(int_to_bytes(key), nonce)
                         client_keys.update({current_socket: cipher})
+                        name_enc = protocol_read(current_socket)
+                        name = cipher.decrypt(name_enc).decode()
+                        client_addrs.update({current_socket: name})
                     # check if connection was aborted
                     elif data == "" or data == b'':
                         # socket was closed

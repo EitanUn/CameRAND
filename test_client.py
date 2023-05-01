@@ -25,7 +25,6 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
     server_socket = socket.socket()
     try:
         server_socket.connect(server_addr)
-        server_socket.send(protocol_encode(name[0], "%in"))  # send name to the server
         server_socket.send(protocol_encode("key", "%pk"))  # request public key from server
         exponent = int(protocol_read(server_socket))
         num = int(protocol_read(server_socket))
@@ -36,6 +35,8 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
         temp_cipher = AES.new(int_to_bytes(key), AES.MODE_EAX)
         server_socket.send(protocol_encode(temp_cipher.nonce, pre='bin'))
         cipher = AesNew(int_to_bytes(key), temp_cipher.nonce)
+        enc_name = cipher.encrypt(name[0].encode())
+        server_socket.send(protocol_encode(enc_name, 'bin'))  # send name to the server
         out_list = []
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
@@ -90,8 +91,6 @@ def protocol_read(socket):
     len = socket.recv(3).decode()  # get length
     if len == "" or len == b'':  # check for error
         return len
-    elif len == '%in':  # name message prefix
-        return 'n'
     elif len == '%pk':  # private key message prefix
         assert socket.recv(6).decode() == "003key"
         return 1
