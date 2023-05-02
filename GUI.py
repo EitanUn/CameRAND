@@ -282,13 +282,14 @@ class Rand(tk.Frame):
         init for the RNG page
         """
         tk.Frame.__init__(self, parent)
+        self.controller = controller
         self.random = Random()
         self.random.pause()
         label1 = ttk.Label(self, text="RNG", font=("Verdana", 40))
         label1.place(x=1050, y=0)
 
         button1 = ttk.Button(self, text="Home",
-                             command=lambda: self.exit(controller))
+                             command=lambda: self.exit())
         button1.place(x=10, y=10, height=150, width=200)
 
         sep = ttk.Separator(self, orient="vertical")
@@ -330,13 +331,13 @@ class Rand(tk.Frame):
                              command=lambda: save_image('temp.png'))
         button4.place(x=825, y=500, width=150, height=60)
 
-    def exit(self, controller):
+    def exit(self):
         """
         A function that deletes the temporary image and exits the window
         """
         if os.path.exists('temp.png'):
             os.remove('temp.png')
-        controller.show_frame(StartPage)
+        self.controller.show_frame(StartPage)
 
     def generate(self):
         """
