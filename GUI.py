@@ -55,6 +55,7 @@ class ChatClient:
         self.ent.place(x=200, y=625, width=900, height=40)
         self.data.place(x=25, y=100, width=150, height=400)
         self.send_but.place(x=1100, y=625, width=50, height=40)
+        self.ent.bind('<KeyPress>', self.send_press)
 
         self.network_thread.start()  # start thread
         self.window.mainloop()
@@ -78,6 +79,10 @@ class ChatClient:
         self.finished.set()
         self.network_thread.join()  # close and join thread on window close
         self.window.destroy()
+
+    def send_press(self, event):
+        if len(event.char) > 0 and ord(event.char) == 13:
+            self.send()
 
 
 class Gui(tk.Tk):
