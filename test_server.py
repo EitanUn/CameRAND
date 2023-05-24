@@ -80,6 +80,15 @@ def main():
                         name_enc = protocol_read(current_socket)
                         name = cipher.decrypt(name_enc).decode()
                         client_addrs.update({current_socket: name})
+                        others = []
+                        others.extend(open_client_sockets)
+                        others.remove(current_socket)
+                        if others:
+                            data = name + " has entered the chat."
+                            send_available(others)
+                            for i in others:
+                                enc_msg = client_keys[i].encrypt(data.encode())
+                                i.send(protocol_encode(enc_msg, "bin"))
                     # check if connection was aborted
                     elif data == "" or data == b'':
                         # socket was closed

@@ -268,8 +268,9 @@ class Collector(tk.Frame):
         """
         function to stop the thread and exit the page back to the SSH keygen window
         """
-        self._done.set()
-        self._coll.join()
+        if self._coll:
+            self._done.set()
+            self._coll.join()
         controller.show_frame(SSH)
 
 
@@ -472,6 +473,4 @@ def main():
 if __name__ == '__main__':
     if os.path.exists('temp.png'):
         os.remove('temp.png')
-    print("".isnumeric())
-    logging.basicConfig(filename="rsagen.log", level=logging.DEBUG)
     main()
