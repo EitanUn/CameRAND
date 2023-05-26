@@ -5,6 +5,7 @@ description: A file for math- and RSA-related functions such as primality tests 
 2 primes, and all the other required functions
 """
 from chaotic_source import Random
+import logging
 
 
 def rabin_miller(num, accuracy, rand: Random):
@@ -15,6 +16,8 @@ def rabin_miller(num, accuracy, rand: Random):
     :param rand: RNG object
     :return: likely prime/not prime
     """
+
+    logging.debug("RSA: Testing if %d is prime further" % num)
     # Returns True if num is a prime number.
 
     s = num - 1
@@ -32,10 +35,12 @@ def rabin_miller(num, accuracy, rand: Random):
             i = 0
             while v != (num - 1):
                 if i == t - 1:
+                    logging.debug("RSA: number is not prime")
                     return False
                 else:
                     i = i + 1
                     v = (v ** 2) % num
+    logging.debug("RSA: %d is prime" % num)
     return True
 
 
@@ -49,8 +54,9 @@ def is_prime(num, rand: Random, accuracy=10):
     """
     # Return True if num is a prime number. This function does a quicker
     # prime number check before calling rabinMiller().
-
+    logging.debug("RSA: Testing if %d is prime" % num)
     if num < 2:
+        logging.debug("RSA: number is not prime")
         return False  # 0, 1, and negative numbers are not prime
 
     # About 1/3 of the time we can quickly determine if num is not prime
@@ -68,14 +74,17 @@ def is_prime(num, rand: Random, accuracy=10):
                   991, 997]
 
     if num in low_primes:
+        logging.debug("RSA: %d is prime" % num)
         return True
 
     # See if any of the low prime numbers can divide num
     for prime in low_primes:
         if num % prime == 0:
+            logging.debug("RSA: number is not prime")
             return False
 
     # If all else fails, call rabinMiller() to determine if num is a prime.
+    logging.debug("RSA: Calling Rabin-miller test")
     return rabin_miller(num, accuracy, rand)
 
 
@@ -111,10 +120,32 @@ def rsa(p, q):
     :param q: prime 2
     :return: the three remaining numbers: modulus, public power and private power
     """
+    logging.debug("RSA: Generating key pair for %d, %d" % (p, q))
     n = p * q
     lam_n = lcm(p-1, q-1)
     e = 65537
     assert gcd(e, lam_n) == 1
     d = pow(e, -1, lam_n)
     assert (e*d) % lam_n == 1
+    logging.debug("RSA: keypair generated")
     return n, e, d
+
+
+def get_prime(rand):
+    """
+    A function to get a prime number based on a randomly generated number
+    :param rand: the random number generator object
+    """
+    logging.debug("RSA: Prime number requested")
+    b = rand.get_rand_large(1024) | 1  # generate random int and make sure it is odd (only even prime is 2, not needed)
+    while not is_prime(b, rand):
+        b += 2  # if not prime, go to the next odd number until prime is found
+    logging.debug("RSA: Found prime %d" % b)
+    return b
+
+
+if __name__ == '__main__':
+    assert gcd(20057, 16261) == 1
+    assert gcd(10000, 25000) == 5000
+    assert lcm(122, 17) == 2074
+    assert lcm(100, 555) == 11100

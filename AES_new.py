@@ -3,6 +3,7 @@ Author: Eitan Unger
 Date: 18/04/23
 description: A small class to create a persistent AES cipher object that doesn't require any command between actions
 """
+import logging
 from Crypto.Cipher import AES
 
 
@@ -16,6 +17,7 @@ class AesNew:
         """
         self.key = key
         self.nonce = nonce
+        logging.debug("AES: created new cipher object")
 
     def encrypt(self, data):
         """
@@ -23,6 +25,7 @@ class AesNew:
         :param data: data to encrypt
         :return: AES encrypted data
         """
+        logging.debug("AES: encrypting message %s" % data)
         cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
         return cipher.encrypt(data)
 
@@ -33,4 +36,6 @@ class AesNew:
         :return: plaintext data (in bytes)
         """
         cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
-        return cipher.decrypt(data)
+        res = cipher.decrypt(data)
+        logging.debug("AES: decrypted message %s" % res)
+        return res

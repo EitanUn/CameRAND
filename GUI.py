@@ -13,10 +13,9 @@ from threading import Thread, Event
 from files import idle_prime, keygen, save_image
 from tkinter.filedialog import askdirectory
 from chaotic_source import Random, test_camera
-from test_client import client_thread
+from client import client_thread
 
 LARGEFONT = ("Verdana", 80)
-SERVER = ()
 
 
 class ChatClient:
@@ -27,6 +26,8 @@ class ChatClient:
         """
         Init method for the chat client
         """
+        logging.debug("ChatClient: New client created as %s connecting to %s:%s" % (name, ip, port))
+        self.name = name
         self.finished = Event()
         self.in_buf = []
         name_f = [name]
@@ -56,7 +57,7 @@ class ChatClient:
         self.data.place(x=25, y=100, width=150, height=400)
         self.send_but.place(x=1100, y=625, width=50, height=40)
         self.ent.bind('<KeyPress>', self.send_press)
-
+        logging.debug("ChatClient: Finished creating chat screen")
         self.network_thread.start()  # start thread
         self.window.mainloop()
 
@@ -65,6 +66,7 @@ class ChatClient:
         sends a message from the input entry to the client thread's input
         """
         if not self.textvar.get() == "":
+            logging.debug("ChatClient: Sending message %s" % self.textvar.get()[0:500])
             # since pasting a message bypasses validate, send only 500 chars
             self.in_buf.append(self.textvar.get()[0:500])
             self.textvar.set("")
@@ -76,6 +78,7 @@ class ChatClient:
         return len(self.textvar.get()) < 500
 
     def on_close(self):
+        logging.debug("ChatClient: Client %s closing" % self.name)
         self.finished.set()
         self.network_thread.join()  # close and join thread on window close
         self.window.destroy()
@@ -118,7 +121,7 @@ class Gui(tk.Tk):
             self.frames[F] = frame
 
             frame.grid(row=0, column=0, sticky="nsew")
-
+        logging.debug("GUI: GUI multi-window setup complete")
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
@@ -139,6 +142,7 @@ class StartPage(tk.Frame):
         """
         init for the start page
         """
+        logging.debug("GUI: Started creating start frame")
         tk.Frame.__init__(self, parent)
 
         # label of frame Layout 2
@@ -172,6 +176,7 @@ class StartPage(tk.Frame):
         # putting the button in its place by
         # using grid
         button2.grid(row=5, column=3, padx=45, pady=10)
+        logging.debug("GUI: Finished creating start frame")
 
 
 # second window frame page1
@@ -183,6 +188,7 @@ class SSH(tk.Frame):
         """
         init for the SSH keygen page
         """
+        logging.debug("GUI: Started creating SSH frame")
         tk.Frame.__init__(self, parent)
         self.path_info = ""
         label1 = ttk.Label(self, text="SSH", font=("Verdana", 40))
@@ -216,14 +222,17 @@ class SSH(tk.Frame):
         button3 = ttk.Button(self, text="Generate", style='Large.TButton',
                              command=lambda: keygen(self.path_info))
         button3.place(y=350, height=200, x=350, width=500)
+        logging.debug("GUI: Finished creating SSH frame")
 
     def get_dir(self):
         """
         A function that gets a directory using tk dialogue and stores it in the frame object
         """
+        logging.debug("GUI: Getting RSA key directory")
         self.path_info = askdirectory()
         dirname = "Dir: " + self.path_info.split("/")[-1]
         self.button.configure(text=dirname)
+        logging.debug("GUI: Got directory %s" % dirname)
 
 
 # third window frame page2
@@ -235,6 +244,7 @@ class Collector(tk.Frame):
         """
         init for the prime number collector page
         """
+        logging.debug("GUI: Started creating collector frame")
         tk.Frame.__init__(self, parent)
         self._done = Event()
         self._coll = None
@@ -256,6 +266,7 @@ class Collector(tk.Frame):
         # putting the button in its place by
         # using grid
         button2.grid(row=3, column=1, padx=10, pady=10)
+        logging.debug("GUI: Finished creating collector frame")
 
     def start(self):
         """
@@ -263,6 +274,7 @@ class Collector(tk.Frame):
         """
         self._coll = Thread(target=idle_prime, args=(self._done,))
         self._coll.start()
+        logging.debug("GUI: Started idle prime search")
 
     def stop(self, controller):
         """
@@ -271,6 +283,7 @@ class Collector(tk.Frame):
         if self._coll:
             self._done.set()
             self._coll.join()
+        logging.debug("GUI: Finished idle prime search")
         controller.show_frame(SSH)
 
 
@@ -282,6 +295,7 @@ class Rand(tk.Frame):
         """
         init for the RNG page
         """
+        logging.debug("GUI: Started creating RNG frame")
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.random = Random()
@@ -331,6 +345,7 @@ class Rand(tk.Frame):
         button4 = ttk.Button(self, text="Save...",
                              command=lambda: save_image('temp.png'))
         button4.place(x=825, y=500, width=150, height=60)
+        logging.debug("GUI: Finished creating RNG frame")
 
     def exit(self):
         """
@@ -338,6 +353,7 @@ class Rand(tk.Frame):
         """
         if os.path.exists('temp.png'):
             os.remove('temp.png')
+            logging.debug("GUI: deleted temporary random image file")
         self.controller.show_frame(StartPage)
 
     def generate(self):
@@ -347,6 +363,7 @@ class Rand(tk.Frame):
         self.random.cont()
         start = self.startval.get()
         end = self.endval.get()
+        logging.debug("GUI: Random number requested between %d and %d" % (int(start), int(end)))
         if int(start) >= int(end):
             val = "Invalid start/end"
         else:
@@ -354,6 +371,7 @@ class Rand(tk.Frame):
         self.resultval = str(val)
         self.result.configure(text=("Number: " + str(val)))
         self.random.pause()
+        logging.debug("GUI: received random number %d" % val)
 
     def copy_val(self, gui: Gui):
         """
@@ -367,16 +385,19 @@ class Rand(tk.Frame):
         time.sleep(0.3)
         self.result.configure(text=("Number: " + self.resultval))
         gui.update()
+        logging.debug("GUI: random number copied to clipboard")
 
     def gen_image(self):
         """
         A function to generate a random image and place it in the label created for it
         """
+        logging.debug("GUI: random image requested")
         self.random.cont()
         self.random.rand_pic("temp.png")
         self.img = tk.PhotoImage(file="temp.png")
         self.image.configure(image=self.img)
         self.random.pause()
+        logging.debug("GUI: random image successfully got")
 
     def validate_start(self):
         """
@@ -399,6 +420,7 @@ class Chat(tk.Frame):
         """
         init for the chat main page
         """
+        logging.debug("GUI: Started creating chat frame")
         tk.Frame.__init__(self, parent)
         self.screen = controller
         self.chats = []
@@ -433,8 +455,11 @@ class Chat(tk.Frame):
         button2 = ttk.Button(self, text="Connect",
                              command=lambda: self.connect())
         button2.place(x=500, y=500, height=100, width=200)
+        logging.debug("GUI: Finished creating chat frame")
 
     def connect(self):
+        logging.debug("GUI: started new chat connection to %s:%s as %s" %
+                      (self.ip.get(), self.port.get(), self.name.get()))
         self.chats.append(ChatClient(self.screen, self.ip.get(), self.port.get(), self.name.get()))
 
 # make other chat window
@@ -449,6 +474,7 @@ def style():
     s.configure('TButton', background="#000000")
     s.configure(style='Large.TButton', font=('Helvetica', 40))
     s.configure(style='Small.TButton', font=('Helvetica', 12))
+    logging.debug("GUI: Style successful")
 
 
 def main():
@@ -456,16 +482,21 @@ def main():
     Main function- makes sure the primes database file exists, then creates the window,
     sets its size and calls the main loop
     """
-    if not os.path.exists("primes.bin"):
+    logging.info("App started")
+    if not os.path.exists("primes.bin"):  # check for primes file (storage), creates an empty one if it isn't found
         with open("primes.bin", "wb") as file:
             pickle.dump([], file)
-    if not test_camera():
+    logging.info("Check for primes file successful")
+    if not test_camera():  # make sure camera is connected
         messagebox.showerror("Camera not found", "The computer's camera is not available")
         return
+    logging.info("Camera found")
     app = Gui()
     app.minsize(1200, 675)
     app.maxsize(1200, 675)
+    logging.info("Applying styles")
     style()
+    logging.info("Mainloop starting")
     app.mainloop()
 
 
@@ -473,4 +504,5 @@ def main():
 if __name__ == '__main__':
     if os.path.exists('temp.png'):
         os.remove('temp.png')
+    logging.basicConfig(filename="camerand.log", level=logging.DEBUG)
     main()

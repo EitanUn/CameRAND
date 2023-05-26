@@ -4,6 +4,7 @@ Date: 18/04/23
 description: Client for CameRAND secure chat communication, can send and receive messages in the background of the chat
 GUI on a thread
 """
+import logging
 import socket
 import tkinter.scrolledtext
 from threading import Event
@@ -25,9 +26,11 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
     server_socket = socket.socket()
     try:
         server_socket.connect(server_addr)
+        logging.debug("Client: Connection successful, requesting public key")
         server_socket.send(protocol_encode("key", "%pk"))  # request public key from server
         exponent = int(protocol_read(server_socket))
         num = int(protocol_read(server_socket))
+        logging.debug("Client: Received public key, deciding on symmetric key and sending")
         rand = Random()
         key = rand.get_rand_large(128)
         rand.pause()
@@ -35,26 +38,31 @@ def client_thread(server_addr: tuple, name,  finished: Event, in_list: list, tex
         temp_cipher = AES.new(int_to_bytes(key), AES.MODE_EAX)
         server_socket.send(protocol_encode(temp_cipher.nonce, pre='bin'))
         cipher = AesNew(int_to_bytes(key), temp_cipher.nonce)
+        logging.debug("Client: symmetric cipher established, sending name")
         enc_name = cipher.encrypt(name[0].encode())
         server_socket.send(protocol_encode(enc_name, 'bin'))  # send name to the server
         out_list = []
+        logging.debug("Client: Finished setup, starting communications")
         while not finished.is_set():
             rlist, wlist, xlist = select.select([server_socket], out_list, [server_socket], 0.05)
 
             if rlist:
                 data = protocol_read(server_socket)
                 if data == "":
+                    logging.debug("Client: Server closed, closing communication")
                     text.configure(state="normal")
                     text.insert(tkinter.END, "---------------------------Server Closed------------------")
                     text.config(state="disabled")
                     break
-                msg = cipher.decrypt(data)
+                msg = cipher.decrypt(data).decode()
+                logging.debug("Client: Received message %s" % msg)
                 text.configure(state="normal")
-                text.insert(tkinter.END, msg.decode() + "\n")
+                text.insert(tkinter.END, msg + "\n")
                 text.config(state="disabled")
 
             if wlist:
                 for i in in_list:
+                    logging.debug("Client: Sending message %s" % i)
                     enc_msg = cipher.encrypt(i.encode())
                     server_socket.send(protocol_encode(enc_msg, 'bin'))
                     in_list.remove(i)
@@ -117,4 +125,6 @@ def int_to_bytes(num):
 
 
 if __name__ == '__main__':
-    pass
+    assert protocol_encode("nothing") == b"007nothing"
+    assert protocol_encode(b'test test', "bin") == b"bin009test test"
+    assert int_to_bytes(123123123123) == b'\xb3\xc3\xb5\xaa\x1c'

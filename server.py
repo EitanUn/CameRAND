@@ -9,6 +9,7 @@ import socket
 import select
 from Crypto.PublicKey import RSA
 from AES_new import AesNew
+import logging
 
 # --------------------------- CONSTANTS ---------------------------
 SERVER_IP = '0.0.0.0'
@@ -26,6 +27,7 @@ def main():
     main loop, checks for new connections, errors, disconnects and messages (in this order), also makes secure
     connections using an SSH key pair and an AES encryption. appends clients names to messages.
     """
+    logging.debug("starting server")
     open_client_sockets = []
     client_addrs = {}
     client_keys = {}
@@ -36,11 +38,13 @@ def main():
     try:
         server_socket.bind((SERVER_IP, SERVER_PORT))
         server_socket.listen(LISTEN_SIZE)
+        logging.debug("server started, listening for connections or messages")
         while True:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets,
                                                 [], open_client_sockets, 0.01)
             # check for exception
             for current_socket in xlist:
+                logging.error("found error, disconnecting socket")
                 open_client_sockets.remove(current_socket)
                 current_socket.close()
             for current_socket in rlist:
@@ -48,16 +52,19 @@ def main():
                 if current_socket is server_socket:
                     client_socket, client_address = current_socket.accept()
                     open_client_sockets.append(client_socket)
-                    print("new client added")
+                    logging.info("new client added")
                     break
                 else:
                     # receive data
                     data = protocol_read(current_socket)
-                    if data == 0:
+                    logging.debug("new data received: %s" % str(data))
+                    if data == 0 or data == "" or data == b'':
+                        if data == "" or data == b'':
+                            logging.exception("connection with client aborted, closing")
                         open_client_sockets.remove(current_socket)
                         if current_socket in client_addrs.keys():
                             name = client_addrs[current_socket]
-                            print("client %s disconnected" % name)
+                            logging.info("client %s disconnected" % name)
                             client_addrs.pop(current_socket)
                             if open_client_sockets:
                                 data = name + " has left the chat."
@@ -70,6 +77,7 @@ def main():
                         current_socket.close()
 
                     elif data == 1:
+                        logging.debug("unnamed client requested starting secure connection")
                         current_socket.send(protocol_encode(str(private.e)))
                         current_socket.send(protocol_encode(str(private.n)))
                         en_key = int(protocol_read(current_socket))
@@ -89,20 +97,22 @@ def main():
                             for i in others:
                                 enc_msg = client_keys[i].encrypt(data.encode())
                                 i.send(protocol_encode(enc_msg, "bin"))
-                    # check if connection was aborted
-                    elif data == "" or data == b'':
-                        # socket was closed
-                        open_client_sockets.remove(current_socket)
-                        current_socket.close()
+                        logging.info("secure connection established with %s" % name)
                     else:
-                        assert current_socket in client_keys.keys()
-                        msg = client_keys[current_socket].decrypt(data).decode()
-                        data = client_addrs[current_socket] + ": " + msg
-                        send_available(open_client_sockets)
-                        for i in open_client_sockets:
-                            enc_msg = client_keys[i].encrypt(data.encode())
-                            i.send(protocol_encode(enc_msg, "bin"))
+                        # make sure client is registered with the addresses dict
+                        if current_socket in client_keys.keys():
+                            msg = client_keys[current_socket].decrypt(data).decode()
+                            logging.debug("received message %s from client %s" % (msg, client_addrs[current_socket]))
+                            data = client_addrs[current_socket] + ": " + msg
+                            send_available(open_client_sockets)
+                            for i in open_client_sockets:
+                                enc_msg = client_keys[i].encrypt(data.encode())
+                                i.send(protocol_encode(enc_msg, "bin"))
+                            logging.debug("sent message to all clients successfully")
+                        else:
+                            pass
     except socket.error as err:
+        logging.error("encountered error with the connection, aborting server")
         abort(open_client_sockets)
         print("error: " + str(err))
     finally:
@@ -187,4 +197,8 @@ def abort(sockets):
 
 
 if __name__ == '__main__':
+    assert protocol_encode("nothing") == b"007nothing"
+    assert protocol_encode(b'test test', "bin") == b"bin009test test"
+    assert int_to_bytes(123123123123) == b'\xb3\xc3\xb5\xaa\x1c'
+    logging.basicConfig(filename="server.log", level=logging.DEBUG)
     main()
