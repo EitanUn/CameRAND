@@ -283,6 +283,7 @@ class Collector(tk.Frame):
         if self._coll:
             self._done.set()
             self._coll.join()
+            self._coll = None
         logging.debug("GUI: Finished idle prime search")
         controller.show_frame(SSH)
 
