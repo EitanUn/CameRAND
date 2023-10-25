@@ -139,6 +139,11 @@ class Random:
         cv2.imwrite(name, frame)
         logging.debug("Random: Successfully saved random image")
 
+    def shuffle(self, shuff: list):
+        for i in range(len(shuff) - 1, 1, -1):
+            place = self.get_int_range(0, i)
+            shuff[i], shuff[place] = shuff[place], shuff[i]
+
 
 def test_camera():
     """
