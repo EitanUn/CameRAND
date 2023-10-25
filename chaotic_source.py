@@ -140,8 +140,9 @@ class Random:
         logging.debug("Random: Successfully saved random image")
 
     def shuffle(self, shuff: list):
-        for i in range(len(shuff) - 1, 1, -1):
+        for i in range(len(shuff) - 1, 0, -1):
             place = self.get_int_range(0, i)
+            print(place, i)
             shuff[i], shuff[place] = shuff[place], shuff[i]
         return shuff
 
