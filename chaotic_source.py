@@ -143,6 +143,7 @@ class Random:
         for i in range(len(shuff) - 1, 1, -1):
             place = self.get_int_range(0, i)
             shuff[i], shuff[place] = shuff[place], shuff[i]
+        return shuff
 
 
 def test_camera():
